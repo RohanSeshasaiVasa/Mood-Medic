@@ -14,8 +14,8 @@
             <a class="nav-link active" href="#home">
                 <span class="nav-icon">🏠</span> Home
             </a>
-            <a  class="nav-link" href="chat_bot.html">
-                <span class="nav-icon">🤖</span> Chat Bot
+            <a  class="nav-link" href="Game.html">
+                <span class="nav-icon">🤖</span> Game
             </a>
         </div>
     </header>
@@ -72,6 +72,34 @@
         <ul>
             <li>Reconnect with friends, family, or colleagues you haven't spoken to in a while.</li>
             <li>If possible, getting a pet can provide companionship and reduce feelings of isolation.</li></ul>
+    </div>
+
+    <div id="chatbot-container"></div>
+    <div id="chatbot">
+    <script src="https://cdn.jotfor.ms/s/umd/latest/for-embedded-agent.js"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", function() {
+    window.AgentInitializer.init({
+      rootId: "JotformAgent-0197fa0359b47ff7bc8d0880d478f54c48a2",
+      formID: "0197fa0359b47ff7bc8d0880d478f54c48a2",
+      queryParams: ["skipWelcome=1", "maximizable=1"],
+      domain: "https:\/\/www.jotform.com",
+      isInitialOpen: false,
+      isDraggable: false,
+      background: "linear-gradient(180deg, #6C73A8 0%, #6C73A8 100%)",
+      buttonBackgroundColor: "#0066C3",
+      buttonIconColor: "#FFFFFF",
+      variant: false,
+      customizations: {
+        greeting: "Yes",
+        greetingMessage: "Hi! How can I assist you?",
+        pulse: "Yes",
+        position: "right"
+            }
+        });
+    });
+    </script>
+    <svg id="pointer-svg" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:9999;"></svg>">
     </div>
     <script src="script.js"></script>
 </body>
