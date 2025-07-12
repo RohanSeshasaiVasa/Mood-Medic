@@ -14,99 +14,102 @@
             <a class="nav-link active" href="#home">
                 <span class="nav-icon">🏠</span> Home
             </a>
-            <a  class="nav-link" href="Game.html">
+            <a class="nav-link" href="Game.html">
                 <span class="nav-icon">🤖</span> Game
             </a>
         </div>
     </header>
 
-    <div>
-        <h3>What is your mood right now<h3><br>
+    <main>
+        <h3>What is your mood right now?</h3>
         <label for="mood">Choose your mood</label>
         <select id="mood" name="mood">
             <option value="--">--</option>
-            <option value="happy">Happy</option>
-            <option value="angry">Angry</option>
-            <option value="sad">Sad</option>
-            <option value="anxious">Anxiety</option>
-            <option value="dizzy">Dizzy</option>
-            <option value="loneliness">Loneliness</option>
+            <option value="happy">😊 Happy</option>
+            <option value="angry">😡 Angry</option>
+            <option value="sad">😢 Sad</option>
+            <option value="anxious">😰 Anxiety</option>
+            <option value="dizzy">😵 Dizzy</option>
+            <option value="loneliness">😔 Loneliness</option>
         </select>
-    </div>
-    <div id="div1">
-        <p>Its good that you are being happy.<br>If you want become more happy just follow me</p>
-        <ul>
-            <li>Chat with your friends some time.</li>
-            <li>Go out on a walk or go to the park and enjoy with your friends</li></ul>
-    </div>
 
-    <div id="div2">
-        <p>Follow these steps to reduce your anger</p>
-        <ul>
-            <li>Take a nap.</li>
-            <li>Play a game.</li></ul>
-    </div>
+        <div id="div1" class="advice-card">
+            <p>It's good that you are happy.<br>If you want to become even happier, just follow me:</p>
+            <ul>
+                <li>Chat with your friends for a while.</li>
+                <li>Go out for a walk or enjoy time at the park with friends.</li>
+            </ul>
+        </div>
 
-    <div id="div3">
-        <p>Follow these steps to fight with sadness</p>
-        <ul>
-            <li>Do meditation (Best practice).</li>
-            <li>Go for a party to remove it from your mind permanently.</li></ul>
-    </div>
-    
-    <div id="div4">
-        <p>Follow these steps to deal with anxiety</p>
-        <ul>
-            <li>Aim for 7-9 hours of quality sleep per night to regulate mood and energy levels.</li>
-            <li>Engage in physical activity to reduce stress and improve mood.</li></ul>
-    </div>
-    <div id="div5">
-        <p>Follow these steps to deal with Dizziness</p>
-        <ul>
-            <li>Drink plenty of fluids to avoid dehydration, a common cause of dizziness.</li>
-            <li>Consult a Neurotologist</li></ul>
-    </div>
+        <div id="div2" class="advice-card">
+            <p>Follow these steps to reduce your anger:</p>
+            <ul>
+                <li>Take a nap.</li>
+                <li>Play a game.</li>
+            </ul>
+        </div>
 
-    <div id="div6">
-        <p>Follow these steps to deal with Loneliness</p>
-        <ul>
-            <li>Reconnect with friends, family, or colleagues you haven't spoken to in a while.</li>
-            <li>If possible, getting a pet can provide companionship and reduce feelings of isolation.</li></ul>
-    </div>
+        <div id="div3" class="advice-card">
+            <p>Follow these steps to fight sadness:</p>
+            <ul>
+                <li>Do meditation (best practice).</li>
+                <li>Go to a party to remove it from your mind permanently.</li>
+            </ul>
+        </div>
+        
+        <div id="div4" class="advice-card">
+            <p>Follow these steps to deal with anxiety:</p>
+            <ul>
+                <li>Aim for 7-9 hours of quality sleep per night to regulate mood and energy levels.</li>
+                <li>Engage in physical activity to reduce stress and improve mood.</li>
+            </ul>
+        </div>
+        <div id="div5" class="advice-card">
+            <p>Follow these steps to deal with dizziness:</p>
+            <ul>
+                <li>Drink plenty of fluids to avoid dehydration, a common cause of dizziness.</li>
+                <li>Consult a Neurotologist.</li>
+            </ul>
+        </div>
 
+        <div id="div6" class="advice-card">
+            <p>Follow these steps to deal with loneliness:</p>
+            <ul>
+                <li>Reconnect with friends, family, or colleagues you haven't spoken to in a while.</li>
+                <li>If possible, getting a pet can provide companionship and reduce feelings of isolation.</li>
+            </ul>
+        </div>
+    </main>
+
+    <!-- Chatbot Widget (outside main content) -->
     <div id="chatbot-container"></div>
-    <div id="chatbot">
     <script src="https://cdn.jotfor.ms/s/umd/latest/for-embedded-agent.js"></script>
-<script>
-  window.addEventListener("DOMContentLoaded", function() {
-    window.AgentInitializer.init({
-      rootId: "JotformAgent-0197fa0359b47ff7bc8d0880d478f54c48a2",
-      formID: "0197fa0359b47ff7bc8d0880d478f54c48a2",
-      queryParams: ["skipWelcome=1", "maximizable=1"],
-      domain: "https:\/\/www.jotform.com",
-      isInitialOpen: false,
-      isDraggable: false,
-      background: "linear-gradient(180deg, #6C73A8 0%, #6C73A8 100%)",
-      buttonBackgroundColor: "#0066C3",
-      buttonIconColor: "#FFFFFF",
-      variant: false,
-      customizations: {
-        greeting: "Yes",
-        greetingMessage: "Hi! How can I assist you?",
-        pulse: "Yes",
-        position: "right"
-            }
+    <script>
+      window.addEventListener("DOMContentLoaded", function() {
+        window.AgentInitializer.init({
+          rootId: "JotformAgent-0197fa0359b47ff7bc8d0880d478f54c48a2",
+          formID: "0197fa0359b47ff7bc8d0880d478f54c48a2",
+          queryParams: ["skipWelcome=1", "maximizable=1"],
+          domain: "https://www.jotform.com",
+          isInitialOpen: false,
+          isDraggable: false,
+          background: "linear-gradient(180deg, #6C73A8 0%, #6C73A8 100%)",
+          buttonBackgroundColor: "#0066C3",
+          buttonIconColor: "#FFFFFF",
+          variant: false,
+          customizations: {
+            greeting: "Yes",
+            greetingMessage: "Hi! How can I assist you?",
+            pulse: "Yes",
+            position: "right"
+          }
         });
-    });
+      });
     </script>
-    <svg id="pointer-svg" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:9999;"></svg>">
-    </div>
+
+    <footer>
+        &copy; 2025 Mood Medic. All rights reserved.
+    </footer>
     <script src="script.js"></script>
 </body>
 </html>
-
-        <!-- <div id="div">
-        <p></p>
-        <ul>
-            <li></li>
-            <li></li></ul> -->

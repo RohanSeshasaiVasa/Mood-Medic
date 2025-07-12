@@ -3,127 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bubble Pop Game - Mood Medic</title>
+    <title>Relaxing Games - Mood Medic</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(180deg, #b2f0e6 0%, #e0c3fc 100%);
+        .games-gallery {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 32px 0 40px 0;
+        }
+        .game-card {
+            background: #f7fafd;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(108,115,168,0.07);
+            padding: 18px 24px;
+            width: 220px;
+            text-align: center;
+            transition: box-shadow 0.2s;
+            border: 2px solid #b2f0e6;
+        }
+        .game-card:hover {
+            box-shadow: 0 6px 24px rgba(108,115,168,0.13);
+        }
+        .play-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 18px;
+            background: #6C73A8;
+            color: #fff;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+        .play-btn:hover:not(.disabled) {
+            background: #3a7ca5;
+        }
+        .play-btn.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .game-section {
+            margin-top: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            font-family: 'Segoe UI', sans-serif;
         }
-        h2 {
-            margin-top: 30px;
-            color: #4a4a4a;
+        #bubble-pop-container, #geometry-dash-container {
+            display: none;
+            margin-bottom: 32px;
         }
         #score {
-            font-size: 1.5em;
+            font-size: 1.2em;
+            color: #3a7ca5;
             margin-bottom: 10px;
-            color: #3a7ca5;
         }
-        canvas {
-            background: rgba(255,255,255,0.7);
-            border-radius: 20px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-        }
-        .back-link {
-            margin-top: 20px;
-            text-decoration: none;
-            color: #3a7ca5;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .back-link:hover {
-            text-decoration: underline;
+        @media (max-width: 700px) {
+            .games-gallery {
+                flex-direction: column;
+                align-items: center;
+            }
+            .game-card {
+                width: 90vw;
+            }
+            #geometryDash {
+                width: 98vw !important;
+                max-width: 100%;
+            }
+            #bubbleCanvas {
+                width: 98vw !important;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <h2>🫧 Bubble Pop - Relax and Play!</h2>
-    <div id="score">Score: 0</div>
-    <canvas id="bubbleCanvas" width="400" height="600"></canvas>
-    <a href="index.html" class="back-link">← Back to Mood Medic</a>
-    <script>
-        const canvas = document.getElementById('bubbleCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreDisplay = document.getElementById('score');
-        let score = 0;
+    <header>
+        <h2>🎮 Relaxing Games</h2>
+        <div class="nav">
+            <a class="nav-link" href="index.html">
+                <span class="nav-icon">🏠</span> Home
+            </a>
+            <a class="nav-link active" href="Game.html">
+                <span class="nav-icon">🎮</span> Games
+            </a>
+        </div>
+    </header>
 
-        function randomColor() {
-            const colors = ['#aee9f7', '#f7d6e0', '#f7f1a3', '#b2f7c6', '#e0c3fc', '#f7cac9'];
-            return colors[Math.floor(Math.random() * colors.length)];
-        }
+    <div class="games-gallery">
+        <div class="game-card">
+            <h3>🫧 Bubble Pop</h3>
+            <p>Pop bubbles to relax and score points!</p>
+            <button class="play-btn play-bubble-pop">Play</button>
+        </div>
+        <div class="game-card">
+            <h3>🟦 Geometry Dash</h3>
+            <p>Jump and dodge obstacles in this classic runner!</p>
+            <button class="play-btn play-geometry-dash">Play</button>
+        </div>
+    </div>
 
-        class Bubble {
-            constructor() {
-                this.radius = Math.random() * 25 + 20;
-                this.x = Math.random() * (canvas.width - 2 * this.radius) + this.radius;
-                this.y = canvas.height + this.radius + Math.random() * 100;
-                this.speed = Math.random() * 1.5 + 0.7;
-                this.color = randomColor();
-                this.popped = false;
-            }
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = 0.7;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                ctx.restore();
-            }
-            update() {
-                this.y -= this.speed;
-            }
-            isClicked(mx, my) {
-                return Math.sqrt((this.x - mx) ** 2 + (this.y - my) ** 2) < this.radius;
-            }
-        }
+    <div class="game-section">
+        <!-- Bubble Pop Game Container -->
+        <div id="bubble-pop-container">
+            <h3>🫧 Bubble Pop</h3>
+            <div id="score">Score: 0</div>
+            <canvas id="bubbleCanvas" width="400" height="600"></canvas>
+        </div>
+        <!-- Geometry Dash Game Container -->
+        <div id="geometry-dash-container">
+            <h3>🟦 Geometry Dash</h3>
+            <canvas id="geometryDash" width="600" height="250" style="display:block;margin:16px auto 0 auto;background:#222;border-radius:16px;"></canvas>
+            <div id="gdash-score" style="text-align:center;font-size:1.2em;color:#3a7ca5;margin-top:8px;"></div>
+        </div>
+    </div>
 
-        let bubbles = [];
-        function addBubble() {
-            if (bubbles.length < 12) {
-                bubbles.push(new Bubble());
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            bubbles.forEach((bubble, i) => {
-                bubble.update();
-                bubble.draw();
-                if (bubble.y + bubble.radius < 0) {
-                    // Remove bubbles that float off screen
-                    bubbles.splice(i, 1);
-                }
-            });
-            requestAnimationFrame(animate);
-        }
-
-        canvas.addEventListener('click', function(e) {
-            const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-            for (let i = bubbles.length - 1; i >= 0; i--) {
-                if (bubbles[i].isClicked(mx, my)) {
-                    bubbles.splice(i, 1);
-                    score++;
-                    scoreDisplay.textContent = 'Score: ' + score;
-                    break;
-                }
-            }
-        });
-
-        // Add bubbles at intervals
-        setInterval(addBubble, 900);
-        animate();
-    </script>
+    <footer>
+        &copy; 2025 Mood Medic. All rights reserved.
+    </footer>
+    <script src="script.js"></script>
 </body>
 </html>
