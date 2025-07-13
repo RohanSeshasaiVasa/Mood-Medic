@@ -105,6 +105,13 @@
             <p>Jump and dodge obstacles in this classic runner!</p>
             <button class="play-btn play-geometry-dash">Play</button>
         </div>
+        <!-- Hunt & Chase Game Container -->
+        <div class="game-card">
+            <h3>🏃 Hunt & Chase</h3>
+            <p>2-Player: Hunter (WASD) vs Prey (Arrow Keys). Hunt your opponent in this thrilling chase game!</p>
+            <button class="play-btn play-hunt-chase">Play</button>
+            <button class="play-btn play-hunt-chase-multiplayer">Play Multiplayer (Online)</button>
+        </div>
     </div>
 
     <div class="game-section">
@@ -120,11 +127,23 @@
             <canvas id="geometryDash" width="600" height="250" style="display:block;margin:16px auto 0 auto;background:#222;border-radius:16px;"></canvas>
             <div id="gdash-score" style="text-align:center;font-size:1.2em;color:#3a7ca5;margin-top:8px;"></div>
         </div>
+        <!-- Hunt and Chase Game container-->
+        <div id="hunt-chase-container">
+            <h3>🏃 Hunt & Chase</h3>
+            <div id="hunt-score" style="text-align:center;font-size:1.2em;color:#3a7ca5;margin-bottom:10px;">Hunter: Use WASD | Prey: Use Arrow Keys</div>
+            <canvas id="huntCanvas" width="800" height="600" style="display:block;margin:16px auto 0 auto;background:#2c3e50;border-radius:16px;border:2px solid #34495e;"></canvas>
+            <div id="hunt-status" style="text-align:center;font-size:1.2em;color:#e74c3c;margin-top:8px;">Press SPACE to start!</div>
+        </div>
     </div>
 
     <footer>
         &copy; 2025 Mood Medic. All rights reserved.
     </footer>
     <script src="script.js"></script>
+    <div id="multiplayer-modal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%); background:#fff; border-radius:12px; box-shadow:0 2px 12px #0003; padding:24px; z-index:1000;">
+      <h3>Online Players</h3>
+      <ul id="player-list"></ul>
+      <button onclick="document.getElementById('multiplayer-modal').style.display='none'">Close</button>
+    </div>
 </body>
 </html>

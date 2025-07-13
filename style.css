@@ -229,3 +229,8 @@ footer {
     background: #ccc;
     cursor: not-allowed;
 }
+
+#hunt-chase-container {
+    display: none;
+    margin-bottom: 32px;
+}
