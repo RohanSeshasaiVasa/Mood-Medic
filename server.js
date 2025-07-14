@@ -1,6 +1,6 @@
    // server.js
    const WebSocket = require('ws');
-   const wss = new WebSocket.Server({ port: 8080 });
+   const wss = new WebSocket.Server({ port: 8083});
 
    let players = {}; // { id: { ws, name, status, opponentId } }
 
@@ -55,16 +55,31 @@
          }
        }
        if (data.type === 'endGame') {
-         const opponentId = players[id].opponentId;
-         if (opponentId && players[opponentId]) {
-           players[opponentId].ws.send(JSON.stringify({ type: 'endGame' }));
-           players[opponentId].status = 'online';
-           players[opponentId].opponentId = null;
-         }
-         players[id].status = 'online';
-         players[id].opponentId = null;
-         broadcastPlayerList();
-       }
+        const opponentId = players[id].opponentId;
+        if (opponentId && players[opponentId]) {
+          // Determine correct winner/loserId for each player
+          let winner = data.winner;
+          // The sender is always the one who triggered the end, so their loserId is data.loserId
+          // The opponent's loserId should always be their own id
+          let oppWinner = data.winner;
+          let oppLoserId = opponentId;
+          players[opponentId].ws.send(JSON.stringify({ 
+            type: 'endGame', 
+            winner: oppWinner, 
+            loserId: oppLoserId 
+          }));
+          players[id].ws.send(JSON.stringify({ 
+            type: 'endGame', 
+            winner: winner, 
+            loserId: data.loserId 
+          }));
+          players[opponentId].status = 'online';
+          players[opponentId].opponentId = null;
+        }
+        players[id].status = 'online';
+        players[id].opponentId = null;
+        broadcastPlayerList();
+      }
      });
 
      ws.on('close', function () {
@@ -79,4 +94,4 @@
      });
    });
 
-   console.log('WebSocket server running on ws://localhost:8080');
+   console.log('WebSocket server running on ws://localhost:8083');

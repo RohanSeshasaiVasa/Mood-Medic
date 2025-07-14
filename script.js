@@ -321,13 +321,15 @@ function startHuntChaseGame() {
     let gameOver = false;
     let winner = '';
     let timeElapsed = 0;
+    let hunterInLightTime = 0;
+    let hunterInLight = false;
     
     // Players
     const hunter = {
         x: 100,
         y: 100,
         size: 20,
-        speed: 4,
+        speed: 4.5,  // Increased hunter speed
         color: '#e74c3c',
         keys: { w: false, a: false, s: false, d: false },
         lastMove: 'd'
@@ -421,50 +423,58 @@ function startHuntChaseGame() {
     }
 
     function drawTorchEffect() {
-        // Black background
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        // Torch effect for prey
+        // Create a temporary canvas for torch effect
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Draw grey background (only for hunter)
+        if (!mpGameActive || mpRole === 'hunter') {
+            tempCtx.fillStyle = 'black';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        } else {
+            tempCtx.fillStyle = 'black';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        }
+        
+        // Draw torch effect (only for prey)
+        if (!mpGameActive || mpRole === 'prey') {
+            tempCtx.save();
+            tempCtx.globalCompositeOperation = 'destination-out';
+            let angle = 0;
+            switch (prey.lastMove) {
+                case 'up': angle = -Math.PI/2; break;
+                case 'down': angle = Math.PI/2; break;
+                case 'left': angle = Math.PI; break;
+                case 'right': angle = 0; break;
+                default: angle = 0;
+            }
+            const torchLength = 180;
+            const torchWidth = Math.PI/2;  // Wider torch angle
+            tempCtx.beginPath();
+            tempCtx.moveTo(prey.x, prey.y);
+            tempCtx.arc(prey.x, prey.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
+            tempCtx.lineTo(prey.x, prey.y);
+            tempCtx.closePath();
+            tempCtx.fill();
+            tempCtx.restore();
+        }
+        
+        // Draw obstacles on temp canvas to block light
+        tempCtx.fillStyle = '#333333';
+        obstacles.forEach(obs => {
+            tempCtx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        });
+        
+        // Draw the temp canvas onto main canvas
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
-        // Torch cone parameters
-        let angle = 0;
-        switch (prey.lastMove) {
-            case 'up': angle = -Math.PI/2; break;
-            case 'down': angle = Math.PI/2; break;
-            case 'left': angle = Math.PI; break;
-            case 'right': angle = 0; break;
-            default: angle = 0;
-        }
-        const torchLength = 180;
-        const torchWidth = Math.PI/3; // 60 degrees
-        ctx.beginPath();
-        ctx.moveTo(prey.x, prey.y);
-        ctx.arc(prey.x, prey.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
-        ctx.lineTo(prey.x, prey.y);
-        ctx.closePath();
-        ctx.fill();
+        ctx.drawImage(tempCanvas, 0, 0);
         ctx.restore();
     }
 
-    function drawGame() {
-        // Black background and torch effect
-        drawTorchEffect();
-        // Draw obstacles
-        drawObstacles();
-        // Draw players
-        drawPlayer(hunter);
-        drawPlayer(prey);
-        // Draw timer
-        if (gameStarted && !gameOver) {
-            ctx.fillStyle = '#fff';
-            ctx.font = '20px Arial';
-            ctx.fillText(`Time: ${Math.floor(timeElapsed)}s`, 10, 30);
-        }
-    }
-
     function isHunterInTorch() {
-        // Torch cone parameters
         let angle = 0;
         switch (prey.lastMove) {
             case 'up': angle = -Math.PI/2; break;
@@ -474,18 +484,71 @@ function startHuntChaseGame() {
             default: angle = 0;
         }
         const torchLength = 180;
-        const torchWidth = Math.PI/3; // 60 degrees
+        const torchWidth = Math.PI/2;  // Wider torch angle
 
         // Vector from prey to hunter
         const dx = hunter.x - prey.x;
         const dy = hunter.y - prey.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         if (dist > torchLength) return false; // Out of range
+        
+        // Check if line of sight is blocked by obstacles
+        const steps = Math.max(10, dist/10);
+        for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const checkX = prey.x + dx * t;
+            const checkY = prey.y + dy * t;
+            
+            for (let obs of obstacles) {
+                if (checkCollisionRect(checkX, checkY, 5, obs)) {
+                    return false; // Line of sight blocked
+                }
+            }
+        }
+        
         // Angle from prey to hunter
         let hunterAngle = Math.atan2(dy, dx);
         // Normalize angles to [-PI, PI]
         let diff = ((hunterAngle - angle + Math.PI*3) % (Math.PI*2)) - Math.PI;
         return Math.abs(diff) < torchWidth/2;
+    }
+
+    function drawGame() {
+        // Clear canvas with appropriate background
+        if (!mpGameActive || mpRole === 'hunter') {
+            ctx.fillStyle = '#333333'; // Grey background for hunter
+        } else {
+            ctx.fillStyle = 'black'; // Black background for prey
+        }
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw torch effect (only for prey)
+        if (!mpGameActive || mpRole === 'prey') {
+            drawTorchEffect();
+        }
+        
+        // Draw obstacles
+        drawObstacles();
+        
+        // Draw players
+        drawPlayer(hunter);
+        drawPlayer(prey);
+        
+        // Draw timer (only in single player)
+        if (!mpGameActive && gameStarted && !gameOver) {
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Time: ${Math.floor(timeElapsed)}s`, 10, 30);
+        }
+        
+        // Draw hunter in light timer
+        if (hunterInLight && !gameOver && (!mpGameActive || mpRole === 'prey')) {
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Hunter spotted! ${(1 - hunterInLightTime).toFixed(1)}s`, canvas.width/2, 30);
+            ctx.textAlign = 'left';
+        }
     }
 
     function gameLoop() {
@@ -502,32 +565,51 @@ function startHuntChaseGame() {
             ctx.font = '48px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(winner, canvas.width/2, canvas.height/2);
-            ctx.font = '24px Arial';
-            ctx.fillText('Press SPACE to restart', canvas.width/2, canvas.height/2 + 50);
+            if (!mpGameActive) {
+                ctx.font = '24px Arial';
+                ctx.fillText('Press SPACE to restart', canvas.width/2, canvas.height/2 + 50);
+            }
             ctx.textAlign = 'left';
             return;
         }
+        
         // Update players
         updatePlayer(hunter);
         updatePlayer(prey);
-        // If hunter is in torchlight, prey wins
-        if (isHunterInTorch()) {
-            gameOver = true;
-            winner = 'Prey Wins!';
-            statusDisplay.textContent = 'Prey spotted the hunter! Press SPACE to restart.';
+        
+        // Check if hunter is in torchlight
+        const hunterInTorch = isHunterInTorch();
+        if (hunterInTorch) {
+            if (!hunterInLight) {
+                hunterInLight = true;
+                hunterInLightTime = 0;
+            } else {
+                hunterInLightTime += 0.016; // About 1/60th of a second
+                if (hunterInLightTime >= 1) {
+                    gameOver = true;
+                    winner = 'Prey Wins!';
+                    statusDisplay.textContent = 'Prey spotted the hunter!';
+                }
+            }
+        } else {
+            hunterInLight = false;
+            hunterInLightTime = 0;
         }
+        
         // Check for collision
         if (checkPlayerCollision()) {
             gameOver = true;
             winner = 'Hunter Wins!';
-            statusDisplay.textContent = 'Hunter caught the prey! Press SPACE to restart.';
+            statusDisplay.textContent = 'Hunter caught the prey!';
         }
+        
         // Check if prey survived for 60 seconds
         if (timeElapsed >= 60) {
             gameOver = true;
             winner = 'Prey Wins!';
-            statusDisplay.textContent = 'Prey survived! Press SPACE to restart.';
+            statusDisplay.textContent = 'Prey survived!';
         }
+        
         drawGame();
         requestAnimationFrame(gameLoop);
     }
@@ -544,8 +626,10 @@ function startHuntChaseGame() {
             timeElapsed += 0.1;
         }
     }, 100);
+    
     // Start the game loop
     gameLoop();
+    
     // Cleanup function
     return () => {
         clearInterval(timer);
@@ -566,7 +650,7 @@ document.addEventListener('keydown', (e) => {
             huntGameState.gameStarted = true;
             statusDisplay.textContent = 'Game in progress...';
             gameLoop();
-        } else if (huntGameState.gameOver) {
+        } else if (huntGameState.gameOver && !mpGameActive) {
             startHuntChaseGame();
         }
         return;
@@ -581,6 +665,7 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') prey.keys.left = true;
     if (e.code === 'ArrowRight') prey.keys.right = true;
 });
+
 document.addEventListener('keyup', (e) => {
     if (!huntGameActive || !huntGameState) return;
     const { hunter, prey } = huntGameState;
@@ -596,15 +681,16 @@ document.addEventListener('keyup', (e) => {
 
 // Multiplayer Hunt & Chase
 let ws;
-let wsServerChoice = null;
+const WS_SERVER = 'wss://rohan.hamaralabs.com';
 let myId, myName, myRole, opponentId;
+let mpGameActive = false;
+let mpGameLoopId = null;
+let mpRole = null;
+let mpOpponentState = null;
+let mpLocalState = null;
+let mpHunterInLightTime = 0;
+let mpHunterInLight = false;
 
-// Always connect WebSocket on page load
-// const WS_SERVER = 'ws://localhost:8080'; // For local testing
-// const WS_SERVER = 'ws://192.168.1.5:8080'; // For LAN (replace with your local IP)
-// const WS_SERVER = 'ws://your-public-ip-or-domain:8080'; // For worldwide
-
-// Move ws.onmessage handler to a named function so it can be set after ws is created
 function wsOnMessageHandler(event) {
     const msg = JSON.parse(event.data);
     if (msg.type === 'yourId') {
@@ -625,7 +711,7 @@ function wsOnMessageHandler(event) {
             ul.appendChild(li);
         });
     }
-    // Add this helper to show invite UI in the modal
+    
     function showInvite(fromName, fromId) {
         const modal = document.getElementById('multiplayer-modal');
         modal.style.display = 'block';
@@ -650,12 +736,6 @@ function wsOnMessageHandler(event) {
         ul.appendChild(declineBtn);
     }
 
-    // In ws.onmessage, replace the invite handler:
-    // if (msg.type === 'invite') {
-    //     if (confirm(msg.name + ' wants to play Hunt & Chase! Accept?')) {
-    //         ws.send(JSON.stringify({ type: 'acceptInvite', from: msg.from }));
-    //     }
-    // }
     if (msg.type === 'invite') {
         showInvite(msg.name, msg.from);
     }
@@ -670,7 +750,8 @@ function wsOnMessageHandler(event) {
             x: mpRole === 'hunter' ? 100 : 700,
             y: mpRole === 'hunter' ? 100 : 500,
             keys: { up: false, down: false, left: false, right: false, w: false, a: false, s: false, d: false },
-            role: mpRole
+            role: mpRole,
+            lastMove: mpRole === 'hunter' ? 'd' : 'left'
         };
         startMultiplayerHuntChase();
     }
@@ -678,9 +759,51 @@ function wsOnMessageHandler(event) {
         mpOpponentState = msg.state;
     }
     if (msg.type === 'endGame') {
-        alert('Game ended or opponent left.');
+        // Debug log
+        console.log('endGame', msg, 'myId:', myId, 'mpRole:', mpRole);
+        // Stop the game loop and prevent any restart
         mpGameActive = false;
-        cancelAnimationFrame(mpGameLoopId);
+        if (mpGameLoopId) cancelAnimationFrame(mpGameLoopId);
+        mpGameLoopId = null;
+        // Remove any event listeners that could restart the game loop
+        window.onkeydown = null;
+        window.onkeyup = null;
+        const canvas = document.getElementById('huntCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = '32px Arial';
+        ctx.textAlign = 'center';
+        // Defensive: if winner/loserId missing, infer from role
+        let winner = msg.winner;
+        let loserId = msg.loserId;
+        if (!winner || !loserId) {
+            if (mpRole === 'hunter') {
+                winner = 'hunter';
+                loserId = myId;
+            } else {
+                winner = 'prey';
+                loserId = myId;
+            }
+        }
+        // Show different messages for winner and loser
+        let endMsg = '';
+        if (winner === 'hunter') {
+            if (mpRole === 'hunter') {
+                endMsg = 'You caught the prey! You Win!';
+            } else {
+                endMsg = 'You were caught! You Lose!';
+            }
+        } else if (winner === 'prey') {
+            if (mpRole === 'prey') {
+                endMsg = 'You spotted the hunter! You Win!';
+            } else {
+                endMsg = 'You were spotted! You Lose!';
+            }
+        }
+        ctx.fillText(endMsg, canvas.width/2, canvas.height/2);
+        ctx.textAlign = 'left';
     }
 }
 
@@ -689,23 +812,22 @@ let enteredName = '';
 const multiplayerBtn = document.querySelector('.play-hunt-chase-multiplayer');
 if (multiplayerBtn) {
     multiplayerBtn.onclick = function() {
-        // Prompt for WebSocket server address if not already chosen
-        if (!wsServerChoice) {
-            wsServerChoice = prompt(
-                'Enter WebSocket server address (e.g. ws://localhost:8080 for local, ws://192.168.1.5:8080 for LAN, ws://your-public-ip-or-domain:8080 for worldwide):',
-                'ws://localhost:8080'
-            );
-        }
-        if (!ws) {
-            ws = new WebSocket(wsServerChoice);
-            ws.onmessage = wsOnMessageHandler;
-        }
         if (!namePrompted) {
             enteredName = prompt('Enter your name for multiplayer:');
             if (enteredName && enteredName.trim().length > 0) {
-                ws.send(JSON.stringify({ type: 'setName', name: enteredName.trim() }));
+                namePrompted = true;
+            } else {
+                return;
             }
-            namePrompted = true;
+        }
+        if (!ws) {
+            ws = new WebSocket(WS_SERVER);
+            ws.onmessage = wsOnMessageHandler;
+            ws.onopen = function() {
+                ws.send(JSON.stringify({ type: 'setName', name: enteredName.trim() }));
+            };
+        } else if (ws.readyState === 1) {
+            ws.send(JSON.stringify({ type: 'setName', name: enteredName.trim() }));
         }
         document.getElementById('multiplayer-modal').style.display = 'block';
     };
@@ -714,12 +836,10 @@ if (multiplayerBtn) {
 function startMultiplayerHuntChase() {
     const canvas = document.getElementById('huntCanvas');
     const ctx = canvas.getContext('2d');
-    // Hide other games, show multiplayer game
     document.getElementById('bubble-pop-container').style.display = 'none';
     document.getElementById('geometry-dash-container').style.display = 'none';
     document.getElementById('hunt-chase-container').style.display = 'block';
 
-    // Obstacles (same as before)
     const obstacles = [
         { x: 200, y: 150, w: 80, h: 20 },
         { x: 500, y: 300, w: 20, h: 80 },
@@ -728,11 +848,9 @@ function startMultiplayerHuntChase() {
         { x: 600, y: 100, w: 20, h: 60 }
     ];
 
-    // Player properties
     const size = 20;
-    const speed = 4;
+    const speed = mpRole === 'hunter' ? 4.5 : 3.5;  // Hunter is faster
 
-    // Listen for key events
     function handleKey(e, isDown) {
         if (!mpGameActive) return;
         if (mpRole === 'hunter') {
@@ -750,7 +868,6 @@ function startMultiplayerHuntChase() {
     window.addEventListener('keydown', e => handleKey(e, true));
     window.addEventListener('keyup', e => handleKey(e, false));
 
-    // Collision detection
     function checkCollisionRect(x, y, size, obstacle) {
         return (
             x + size/2 > obstacle.x &&
@@ -760,12 +877,19 @@ function startMultiplayerHuntChase() {
         );
     }
 
-    // Add this helper inside or above startMultiplayerHuntChase
     function drawTorchEffect(ctx, preyState) {
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, 800, 600);
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
+        // Create temporary canvas for torch effect
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 800;
+        tempCanvas.height = 600;
+        const tempCtx = tempCanvas.getContext('2d');
+        // Draw background: hunter gets grey, prey gets black
+        tempCtx.fillStyle = mpRole === 'hunter' ? '#333333' : 'black';
+        tempCtx.fillRect(0, 0, 800, 600);
+        
+        // Draw torch effect
+        tempCtx.save();
+        tempCtx.globalCompositeOperation = 'destination-out';
         let angle = 0;
         if (preyState.lastMove) {
             switch (preyState.lastMove) {
@@ -777,18 +901,31 @@ function startMultiplayerHuntChase() {
             }
         }
         const torchLength = 180;
-        const torchWidth = Math.PI/3;
-        ctx.beginPath();
-        ctx.moveTo(preyState.x, preyState.y);
-        ctx.arc(preyState.x, preyState.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
-        ctx.lineTo(preyState.x, preyState.y);
-        ctx.closePath();
-        ctx.fill();
+        const torchWidth = Math.PI/2;  // Wider torch angle
+        tempCtx.beginPath();
+        tempCtx.moveTo(preyState.x, preyState.y);
+        tempCtx.arc(preyState.x, preyState.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
+        tempCtx.lineTo(preyState.x, preyState.y);
+        tempCtx.closePath();
+        tempCtx.fill();
+        tempCtx.restore();
+        
+        // Draw obstacles to block light
+        tempCtx.fillStyle = 'black';
+        obstacles.forEach(obs => {
+            tempCtx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        });
+        
+        // Draw onto main canvas
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.drawImage(tempCanvas, 0, 0);
         ctx.restore();
     }
 
-    // Add this helper inside startMultiplayerHuntChase
     function isHunterInTorch(prey, hunter) {
+        if (!prey || !hunter) return false;
+        
         let angle = 0;
         switch (prey.lastMove) {
             case 'up': angle = -Math.PI/2; break;
@@ -798,62 +935,61 @@ function startMultiplayerHuntChase() {
             default: angle = 0;
         }
         const torchLength = 180;
-        const torchWidth = Math.PI/3;
+        const torchWidth = Math.PI/2;  // Wider torch angle
         const dx = hunter.x - prey.x;
         const dy = hunter.y - prey.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         if (dist > torchLength) return false;
+        
+        // Check line of sight for obstacles
+        const steps = Math.max(10, dist/10);
+        for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const checkX = prey.x + dx * t;
+            const checkY = prey.y + dy * t;
+            
+            for (let obs of obstacles) {
+                if (checkCollisionRect(checkX, checkY, 5, obs)) {
+                    return false;
+                }
+            }
+        }
+        
         let hunterAngle = Math.atan2(dy, dx);
         let diff = ((hunterAngle - angle + Math.PI*3) % (Math.PI*2)) - Math.PI;
         return Math.abs(diff) < torchWidth/2;
     }
 
-    // Inside startMultiplayerHuntChase, add this helper:
-    function fixWallCollision(playerState) {
-        const size = 20;
-        // Boundaries
-        if (playerState.x - size/2 < 0) playerState.x = size/2;
-        if (playerState.x + size/2 > 800) playerState.x = 800 - size/2;
-        if (playerState.y - size/2 < 0) playerState.y = size/2;
-        if (playerState.y + size/2 > 600) playerState.y = 600 - size/2;
-        // Wall collision
-        for (let obs of obstacles) {
-            if (
-                playerState.x + size/2 > obs.x &&
-                playerState.x - size/2 < obs.x + obs.w &&
-                playerState.y + size/2 > obs.y &&
-                playerState.y - size/2 < obs.y + obs.h
-            ) {
-                // Simple: move player back to center
-                playerState.x = 400;
-                playerState.y = 300;
-            }
-        }
-    }
-
-    // Game loop
     function gameLoop() {
         if (!mpGameActive) return;
-        // Move local player
+        // Set background: hunter gets grey, prey gets black
+        ctx.fillStyle = mpRole === 'hunter' ? '#333333' : 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Update local player position
         let newX = mpLocalState.x;
         let newY = mpLocalState.y;
+        
+        // Update last move direction
         if (mpRole === 'hunter') {
-            if (mpLocalState.keys.w) newY -= speed;
-            if (mpLocalState.keys.s) newY += speed;
-            if (mpLocalState.keys.a) newX -= speed;
-            if (mpLocalState.keys.d) newX += speed;
+            if (mpLocalState.keys.w) { newY -= speed; mpLocalState.lastMove = 'w'; }
+            if (mpLocalState.keys.s) { newY += speed; mpLocalState.lastMove = 's'; }
+            if (mpLocalState.keys.a) { newX -= speed; mpLocalState.lastMove = 'a'; }
+            if (mpLocalState.keys.d) { newX += speed; mpLocalState.lastMove = 'd'; }
         } else {
-            if (mpLocalState.keys.up) newY -= speed;
-            if (mpLocalState.keys.down) newY += speed;
-            if (mpLocalState.keys.left) newX -= speed;
-            if (mpLocalState.keys.right) newX += speed;
+            if (mpLocalState.keys.up) { newY -= speed; mpLocalState.lastMove = 'up'; }
+            if (mpLocalState.keys.down) { newY += speed; mpLocalState.lastMove = 'down'; }
+            if (mpLocalState.keys.left) { newX -= speed; mpLocalState.lastMove = 'left'; }
+            if (mpLocalState.keys.right) { newX += speed; mpLocalState.lastMove = 'right'; }
         }
-        // Boundaries
+        
+        // Boundary checking
         if (newX - size/2 < 0) newX = size/2;
         if (newX + size/2 > canvas.width) newX = canvas.width - size/2;
         if (newY - size/2 < 0) newY = size/2;
         if (newY + size/2 > canvas.height) newY = canvas.height - size/2;
-        // Wall collision
+        
+        // Wall collision checking
         let collided = false;
         for (let obs of obstacles) {
             if (checkCollisionRect(newX, mpLocalState.y, size, obs)) collided = true;
@@ -865,60 +1001,114 @@ function startMultiplayerHuntChase() {
         }
         if (!collided) mpLocalState.y = newY;
 
-        // Send local state to opponent
-        ws.send(JSON.stringify({ type: 'gameUpdate', state: { x: mpLocalState.x, y: mpLocalState.y, role: mpRole, lastMove: mpLocalState.lastMove } }));
+        // Send updated state to opponent
+        ws.send(JSON.stringify({ 
+            type: 'gameUpdate', 
+            state: { 
+                x: mpLocalState.x, 
+                y: mpLocalState.y, 
+                role: mpRole, 
+                lastMove: mpLocalState.lastMove 
+            } 
+        }));
 
-        // Draw
+        // 4. Only the prey sees the torch effect
         if (mpRole === 'prey') {
-            // Add lastMove to local state
-            let move = null;
-            if (mpLocalState.keys.up) move = 'up';
-            else if (mpLocalState.keys.down) move = 'down';
-            else if (mpLocalState.keys.left) move = 'left';
-            else if (mpLocalState.keys.right) move = 'right';
-            if (move) mpLocalState.lastMove = move;
             drawTorchEffect(ctx, mpLocalState);
-        } else {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        // Obstacles
+        
+        // Draw torch effect for both hunter and prey
+        if (mpOpponentState) {
+            // Find the prey's state (either local or opponent)
+            let preyState = null;
+            if (mpRole === 'prey') {
+                preyState = mpLocalState;
+            } else if (mpOpponentState.role === 'prey') {
+                preyState = mpOpponentState;
+            }
+            if (preyState) {
+                drawTorchEffect(ctx, preyState);
+            }
+        }
+        
+        // Draw obstacles (for both roles)
         ctx.fillStyle = '#95a5a6';
         obstacles.forEach(obs => ctx.fillRect(obs.x, obs.y, obs.w, obs.h));
+
         // Draw local player
         ctx.fillStyle = mpRole === 'hunter' ? '#e74c3c' : '#3498db';
         ctx.fillRect(mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
-        // Draw opponent
+
+        // 3. Prey cannot see hunter unless hunter is in torch
         if (mpOpponentState) {
-            ctx.fillStyle = mpOpponentState.role === 'hunter' ? '#e74c3c' : '#3498db';
-            ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+            if (mpRole === 'prey' && mpOpponentState.role === 'hunter') {
+                if (isHunterInTorch(mpLocalState, mpOpponentState)) {
+                    ctx.fillStyle = '#e74c3c';
+                    ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                }
+            } else {
+                ctx.fillStyle = mpOpponentState.role === 'hunter' ? '#e74c3c' : '#3498db';
+                ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+            }
         }
-        // Win condition: collision
+
+        // 5. After 1s of hunter in torch, end game with correct messages
+        if (mpRole === 'prey' && mpOpponentState && mpOpponentState.role === 'hunter') {
+            const hunterInTorch = isHunterInTorch(mpLocalState, mpOpponentState);
+            if (hunterInTorch) {
+                if (!mpHunterInLight) {
+                    mpHunterInLight = true;
+                    mpHunterInLightTime = 0;
+                } else {
+                    mpHunterInLightTime += 0.016;
+                    if (mpHunterInLightTime >= 1) {
+                        mpGameActive = false;
+                        ws.send(JSON.stringify({ 
+                            type: 'endGame',
+                            winner: 'prey',
+                            loserId: myId // prey sends their own id as loser
+                        }));
+                        return;
+                    }
+                }
+                ctx.fillStyle = '#fff';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Hunter spotted! ${(1 - mpHunterInLightTime).toFixed(1)}s`, canvas.width/2, 30);
+                ctx.textAlign = 'left';
+            } else {
+                mpHunterInLight = false;
+                mpHunterInLightTime = 0;
+            }
+        }
+        // Hunter win by catching prey
         if (mpOpponentState) {
             const dx = mpLocalState.x - mpOpponentState.x;
             const dy = mpLocalState.y - mpOpponentState.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
             if (dist < size) {
                 mpGameActive = false;
-                ws.send(JSON.stringify({ type: 'endGame' }));
-                ctx.fillStyle = '#fff';
-                ctx.font = '32px Arial';
-                ctx.fillText('Game Over!', canvas.width/2 - 80, canvas.height/2);
-                return;
-            }
-        }
-        // Torch win condition (after drawing both players, before requestAnimationFrame):
-        if (mpRole === 'prey' && mpOpponentState && mpOpponentState.role === 'hunter') {
-            if (isHunterInTorch(mpLocalState, mpOpponentState)) {
-                mpGameActive = false;
-                ws.send(JSON.stringify({ type: 'endGame' }));
-                ctx.fillStyle = '#fff';
-                ctx.font = '32px Arial';
-                ctx.fillText('Prey Wins!', canvas.width/2 - 80, canvas.height/2);
+                ws.send(JSON.stringify({ 
+                    type: 'endGame',
+                    winner: mpRole === 'hunter' ? 'hunter' : 'prey',
+                    loserId: myId // always send your own id as loser
+                }));
                 return;
             }
         }
         mpGameLoopId = requestAnimationFrame(gameLoop);
     }
+    
     gameLoop();
 }
+
+// Prevent scrolling when playing Hunt & Chase (multiplayer or single player)
+window.addEventListener('keydown', function(e) {
+    if (
+        (huntGameActive || mpGameActive) &&
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Space"].includes(e.key)
+    ) {
+        e.preventDefault();
+        return false;
+    }
+}, { passive: false });
