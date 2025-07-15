@@ -65,6 +65,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   
   setInterval(createFloatingEmoji, 700);
+
+// Global fullscreen toggle
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyF') {
+        toggleFullscreen();
+    }
+});
   
   
   // === Relaxing Games (Game.html only) ===
@@ -294,6 +301,7 @@ if (gdashCanvas) {
     }
     document.addEventListener('keydown', e => {
         if (e.code === 'Space') jump();
+        if (e.code === 'KeyF') toggleFullscreen();
     });
     gdashCanvas.addEventListener('mousedown', jump);
     gdashCanvas.addEventListener('touchstart', function(e) {
@@ -308,6 +316,40 @@ if (gdashCanvas) {
 // === Hunt & Chase Game ===
 let huntGameActive = false;
 let huntGameState = null;
+
+// Load images for hunter and prey
+const hunterImg = new Image();
+hunterImg.src = 'https://img.icons8.com/ios-filled/50/hunter.png';
+
+const preyImg = new Image();
+preyImg.src = 'https://img.icons8.com/color/48/policeman-male--v1.png';
+
+// Fullscreen toggle function
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.mozRequestFullScreen) {
+            document.documentElement.mozRequestFullScreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+            document.documentElement.msRequestFullscreen();
+        }
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+}
 
 function startHuntChaseGame() {
     huntGameActive = true;
@@ -355,8 +397,17 @@ function startHuntChaseGame() {
     ];
 
     function drawPlayer(player) {
-        ctx.fillStyle = player.color;
-        ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+        if (player.color === '#e74c3c' && hunterImg.complete) {
+            // Draw hunter image
+            ctx.drawImage(hunterImg, player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+        } else if (player.color === '#3498db' && preyImg.complete) {
+            // Draw prey image
+            ctx.drawImage(preyImg, player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+        } else {
+            // Fallback to colored rectangles
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+        }
         // Add a small indicator for direction
         ctx.fillStyle = '#fff';
         ctx.fillRect(player.x - 2, player.y - player.size/2 - 2, 4, 4);
@@ -423,54 +474,42 @@ function startHuntChaseGame() {
     }
 
     function drawTorchEffect() {
-        // Create a temporary canvas for torch effect
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
+        // Draw white torch light directly on canvas
+        ctx.save();
         
-        // Draw grey background (only for hunter)
-        if (!mpGameActive || mpRole === 'hunter') {
-            tempCtx.fillStyle = 'black';
-            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        } else {
-            tempCtx.fillStyle = 'black';
-            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        // Create torch light area
+        let angle = 0;
+        switch (prey.lastMove) {
+            case 'up': angle = -Math.PI/2; break;
+            case 'down': angle = Math.PI/2; break;
+            case 'left': angle = Math.PI; break;
+            case 'right': angle = 0; break;
+            default: angle = 0;
         }
+        const torchLength = 180;
+        const torchWidth = Math.PI/2;  // Wider torch angle
         
-        // Draw torch effect (only for prey)
-        if (!mpGameActive || mpRole === 'prey') {
-            tempCtx.save();
-            tempCtx.globalCompositeOperation = 'destination-out';
-            let angle = 0;
-            switch (prey.lastMove) {
-                case 'up': angle = -Math.PI/2; break;
-                case 'down': angle = Math.PI/2; break;
-                case 'left': angle = Math.PI; break;
-                case 'right': angle = 0; break;
-                default: angle = 0;
-            }
-            const torchLength = 180;
-            const torchWidth = Math.PI/2;  // Wider torch angle
-            tempCtx.beginPath();
-            tempCtx.moveTo(prey.x, prey.y);
-            tempCtx.arc(prey.x, prey.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
-            tempCtx.lineTo(prey.x, prey.y);
-            tempCtx.closePath();
-            tempCtx.fill();
-            tempCtx.restore();
-        }
+        // Create gradient for torch light
+        const gradient = ctx.createRadialGradient(prey.x, prey.y, 0, prey.x, prey.y, torchLength);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
         
-        // Draw obstacles on temp canvas to block light
-        tempCtx.fillStyle = '#333333';
+        // Draw torch cone
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(prey.x, prey.y);
+        ctx.arc(prey.x, prey.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
+        ctx.lineTo(prey.x, prey.y);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw obstacles to block light
+        ctx.fillStyle = '#666666';
         obstacles.forEach(obs => {
-            tempCtx.fillRect(obs.x, obs.y, obs.w, obs.h);
+            ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
         });
         
-        // Draw the temp canvas onto main canvas
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.drawImage(tempCanvas, 0, 0);
         ctx.restore();
     }
 
@@ -514,12 +553,8 @@ function startHuntChaseGame() {
     }
 
     function drawGame() {
-        // Clear canvas with appropriate background
-        if (!mpGameActive || mpRole === 'hunter') {
-            ctx.fillStyle = '#333333'; // Grey background for hunter
-        } else {
-            ctx.fillStyle = 'black'; // Black background for prey
-        }
+        // Clear canvas with grey background for both players
+        ctx.fillStyle = '#666666'; // Grey background for both hunter and prey
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Draw torch effect (only for prey)
@@ -655,6 +690,12 @@ document.addEventListener('keydown', (e) => {
         }
         return;
     }
+    
+    // Handle fullscreen toggle
+    if (e.code === 'KeyF') {
+        toggleFullscreen();
+        return;
+    }
     if (!huntGameState.gameStarted || huntGameState.gameOver) return;
     if (e.code === 'KeyW') hunter.keys.w = true;
     if (e.code === 'KeyS') hunter.keys.s = true;
@@ -735,6 +776,31 @@ function wsOnMessageHandler(event) {
         ul.appendChild(acceptBtn);
         ul.appendChild(declineBtn);
     }
+    
+    function showReplayInvite(fromName, fromId) {
+        const modal = document.getElementById('multiplayer-modal');
+        modal.style.display = 'block';
+        const ul = document.getElementById('player-list');
+        ul.innerHTML = '';
+        const msg = document.createElement('div');
+        msg.textContent = fromName + ' wants to play again!';
+        msg.style.marginBottom = '16px';
+        ul.appendChild(msg);
+        const acceptBtn = document.createElement('button');
+        acceptBtn.textContent = 'Accept Replay';
+        acceptBtn.onclick = function() {
+            ws.send(JSON.stringify({ type: 'replayResponse', targetId: fromId, accepted: true }));
+            modal.style.display = 'none';
+        };
+        const declineBtn = document.createElement('button');
+        declineBtn.textContent = 'Decline Replay';
+        declineBtn.onclick = function() {
+            ws.send(JSON.stringify({ type: 'replayResponse', targetId: fromId, accepted: false }));
+            modal.style.display = 'none';
+        };
+        ul.appendChild(acceptBtn);
+        ul.appendChild(declineBtn);
+    }
 
     if (msg.type === 'invite') {
         showInvite(msg.name, msg.from);
@@ -803,7 +869,64 @@ function wsOnMessageHandler(event) {
             }
         }
         ctx.fillText(endMsg, canvas.width/2, canvas.height/2);
+        
+        // Add replay button
+        ctx.font = '20px Arial';
+        ctx.fillText('Click R for Replay', canvas.width/2, canvas.height/2 + 50);
         ctx.textAlign = 'left';
+    }
+    
+    if (msg.type === 'replayInvite') {
+        showReplayInvite(msg.fromName, msg.from);
+    }
+    
+    if (msg.type === 'replayResponse') {
+        if (msg.accepted) {
+            // Switch roles for fair replay
+            mpRole = mpRole === 'hunter' ? 'prey' : 'hunter';
+            myRole = mpRole;
+            
+            // Restart the game with the same opponent
+            mpGameActive = true;
+            mpOpponentState = null;
+            mpLocalState = {
+                x: mpRole === 'hunter' ? 100 : 700,
+                y: mpRole === 'hunter' ? 100 : 500,
+                keys: { up: false, down: false, left: false, right: false, w: false, a: false, s: false, d: false },
+                role: mpRole,
+                lastMove: mpRole === 'hunter' ? 'd' : 'left'
+            };
+            startMultiplayerHuntChase();
+        } else {
+            // Show rejection message
+            const canvas = document.getElementById('huntCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Replay request rejected', canvas.width/2, canvas.height/2);
+            ctx.textAlign = 'left';
+        }
+    }
+    
+    if (msg.type === 'replayStart') {
+        // Switch roles for fair replay
+        mpRole = msg.role;
+        myRole = mpRole;
+        
+        // Restart the game with the same opponent
+        mpGameActive = true;
+        mpOpponentState = null;
+        mpLocalState = {
+            x: mpRole === 'hunter' ? 100 : 700,
+            y: mpRole === 'hunter' ? 100 : 500,
+            keys: { up: false, down: false, left: false, right: false, w: false, a: false, s: false, d: false },
+            role: mpRole,
+            lastMove: mpRole === 'hunter' ? 'd' : 'left'
+        };
+        startMultiplayerHuntChase();
     }
 }
 
@@ -865,7 +988,21 @@ function startMultiplayerHuntChase() {
             if (e.code === 'ArrowRight') mpLocalState.keys.right = isDown;
         }
     }
-    window.addEventListener('keydown', e => handleKey(e, true));
+    window.addEventListener('keydown', e => {
+        // Handle replay invite
+        if (e.code === 'KeyR' && !mpGameActive && opponentId) {
+            ws.send(JSON.stringify({ type: 'replayInvite', targetId: opponentId }));
+            return;
+        }
+        
+        // Handle fullscreen toggle
+        if (e.code === 'KeyF') {
+            toggleFullscreen();
+            return;
+        }
+        
+        handleKey(e, true);
+    });
     window.addEventListener('keyup', e => handleKey(e, false));
 
     function checkCollisionRect(x, y, size, obstacle) {
@@ -878,18 +1015,10 @@ function startMultiplayerHuntChase() {
     }
 
     function drawTorchEffect(ctx, preyState) {
-        // Create temporary canvas for torch effect
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = 800;
-        tempCanvas.height = 600;
-        const tempCtx = tempCanvas.getContext('2d');
-        // Draw background: hunter gets grey, prey gets black
-        tempCtx.fillStyle = mpRole === 'hunter' ? '#333333' : 'black';
-        tempCtx.fillRect(0, 0, 800, 600);
+        // Draw white torch light directly on canvas
+        ctx.save();
         
-        // Draw torch effect
-        tempCtx.save();
-        tempCtx.globalCompositeOperation = 'destination-out';
+        // Create torch light area
         let angle = 0;
         if (preyState.lastMove) {
             switch (preyState.lastMove) {
@@ -902,24 +1031,28 @@ function startMultiplayerHuntChase() {
         }
         const torchLength = 180;
         const torchWidth = Math.PI/2;  // Wider torch angle
-        tempCtx.beginPath();
-        tempCtx.moveTo(preyState.x, preyState.y);
-        tempCtx.arc(preyState.x, preyState.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
-        tempCtx.lineTo(preyState.x, preyState.y);
-        tempCtx.closePath();
-        tempCtx.fill();
-        tempCtx.restore();
+        
+        // Create gradient for torch light
+        const gradient = ctx.createRadialGradient(preyState.x, preyState.y, 0, preyState.x, preyState.y, torchLength);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+        
+        // Draw torch cone
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(preyState.x, preyState.y);
+        ctx.arc(preyState.x, preyState.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
+        ctx.lineTo(preyState.x, preyState.y);
+        ctx.closePath();
+        ctx.fill();
         
         // Draw obstacles to block light
-        tempCtx.fillStyle = 'black';
+        ctx.fillStyle = '#666666';
         obstacles.forEach(obs => {
-            tempCtx.fillRect(obs.x, obs.y, obs.w, obs.h);
+            ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
         });
         
-        // Draw onto main canvas
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.drawImage(tempCanvas, 0, 0);
         ctx.restore();
     }
 
@@ -962,8 +1095,8 @@ function startMultiplayerHuntChase() {
 
     function gameLoop() {
         if (!mpGameActive) return;
-        // Set background: hunter gets grey, prey gets black
-        ctx.fillStyle = mpRole === 'hunter' ? '#333333' : 'black';
+        // Set grey background for both players
+        ctx.fillStyle = '#666666';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Update local player position
@@ -1036,19 +1169,35 @@ function startMultiplayerHuntChase() {
         obstacles.forEach(obs => ctx.fillRect(obs.x, obs.y, obs.w, obs.h));
 
         // Draw local player
-        ctx.fillStyle = mpRole === 'hunter' ? '#e74c3c' : '#3498db';
-        ctx.fillRect(mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
+        if (mpRole === 'hunter' && hunterImg.complete) {
+            ctx.drawImage(hunterImg, mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
+        } else if (mpRole === 'prey' && preyImg.complete) {
+            ctx.drawImage(preyImg, mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
+        } else {
+            ctx.fillStyle = mpRole === 'hunter' ? '#e74c3c' : '#3498db';
+            ctx.fillRect(mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
+        }
 
         // 3. Prey cannot see hunter unless hunter is in torch
         if (mpOpponentState) {
             if (mpRole === 'prey' && mpOpponentState.role === 'hunter') {
                 if (isHunterInTorch(mpLocalState, mpOpponentState)) {
-                    ctx.fillStyle = '#e74c3c';
-                    ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                    if (hunterImg.complete) {
+                        ctx.drawImage(hunterImg, mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                    } else {
+                        ctx.fillStyle = '#e74c3c';
+                        ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                    }
                 }
             } else {
-                ctx.fillStyle = mpOpponentState.role === 'hunter' ? '#e74c3c' : '#3498db';
-                ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                if (mpOpponentState.role === 'hunter' && hunterImg.complete) {
+                    ctx.drawImage(hunterImg, mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                } else if (mpOpponentState.role === 'prey' && preyImg.complete) {
+                    ctx.drawImage(preyImg, mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                } else {
+                    ctx.fillStyle = mpOpponentState.role === 'hunter' ? '#e74c3c' : '#3498db';
+                    ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                }
             }
         }
 
