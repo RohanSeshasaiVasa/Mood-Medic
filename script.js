@@ -722,7 +722,7 @@ document.addEventListener('keyup', (e) => {
 
 // Multiplayer Hunt & Chase
 let ws;
-const WS_SERVER = 'wss://rohan.hamaralabs.com';
+const WS_SERVER = 'wss://moodmedic.rohan.hackclub.app';
 let myId, myName, myRole, opponentId;
 let mpGameActive = false;
 let mpGameLoopId = null;
