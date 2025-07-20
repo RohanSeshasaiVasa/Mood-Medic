@@ -4,7 +4,11 @@
   "description": "Learns about your mood and will suggest the required medicine for it",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:game": "node server.js",
+    "start:chat": "node chat-server.js",
+    "start": "node start-servers.js",
+    "start:simple": "node run-simple.js"
   },
   "repository": {
     "type": "git",

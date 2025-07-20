@@ -1,55 +1,170 @@
+// === Custom Cursor Effects ===
+document.addEventListener('DOMContentLoaded', function () {
+    // Create custom cursor
+    const cursor = document.createElement('div');
+    cursor.classList.add('custom-cursor');
+    document.body.appendChild(cursor);
+
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
+    // Cursor trail array
+    const trailElements = [];
+    const maxTrailLength = 8;
+
+    // Update cursor position
+    function updateCursor() {
+        cursorX += (mouseX - cursorX) * 0.1;
+        cursorY += (mouseY - cursorY) * 0.1;
+
+        cursor.style.left = cursorX - 10 + 'px';
+        cursor.style.top = cursorY - 10 + 'px';
+
+        requestAnimationFrame(updateCursor);
+    }
+
+    // Mouse move handler
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        // Create trail
+        if (window.innerWidth > 768) { // Only on desktop
+            createTrail(e.clientX, e.clientY);
+        }
+    });
+
+    // Create cursor trail
+    function createTrail(x, y) {
+        const trail = document.createElement('div');
+        trail.classList.add('cursor-trail');
+        trail.style.left = x - 3 + 'px';
+        trail.style.top = y - 3 + 'px';
+        document.body.appendChild(trail);
+
+        trailElements.push(trail);
+
+        // Remove old trail elements
+        if (trailElements.length > maxTrailLength) {
+            const oldTrail = trailElements.shift();
+            if (oldTrail.parentNode) {
+                oldTrail.parentNode.removeChild(oldTrail);
+            }
+        }
+
+        // Remove trail after animation
+        setTimeout(() => {
+            if (trail.parentNode) {
+                trail.parentNode.removeChild(trail);
+            }
+            const index = trailElements.indexOf(trail);
+            if (index > -1) {
+                trailElements.splice(index, 1);
+            }
+        }, 800);
+    }
+
+    // Hover effects for interactive elements
+    const interactiveElements = document.querySelectorAll('a, button, .nav-link, .play-btn, .advice-card, .game-card, select');
+
+    interactiveElements.forEach(element => {
+        element.addEventListener('mouseenter', () => {
+            cursor.classList.add('hover');
+        });
+
+        element.addEventListener('mouseleave', () => {
+            cursor.classList.remove('hover');
+        });
+
+        element.addEventListener('mousedown', () => {
+            cursor.classList.add('click');
+        });
+
+        element.addEventListener('mouseup', () => {
+            cursor.classList.remove('click');
+        });
+    });
+
+    // Start cursor animation
+    if (window.innerWidth > 768) { // Only on desktop
+        updateCursor();
+    }
+
+    // Add floating particles
+    function createFloatingParticle() {
+        if (window.innerWidth <= 768) return; // Skip on mobile
+
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        particle.style.left = Math.random() * 100 + 'vw';
+        particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+        particle.style.animationDelay = Math.random() * 5 + 's';
+
+        document.body.appendChild(particle);
+
+        setTimeout(() => {
+            if (particle.parentNode) {
+                particle.parentNode.removeChild(particle);
+            }
+        }, 20000);
+    }
+
+    // Create particles periodically
+    setInterval(createFloatingParticle, 3000);
+});
+
 // === Mood Selection (Index.html) ===
 document.addEventListener('DOMContentLoaded', function () {
     const mood = document.getElementById('mood');
     const body = document.body;
-  
+
     // Apply background class based on mood
     if (mood && body) {
-      body.classList.remove('happy', 'angry', 'sad', 'anxious', 'dizzy', 'loneliness');
-      if (mood.value !== '--') {
-        body.classList.add(mood.value);
-      }
-  
-      mood.addEventListener('change', function () {
         body.classList.remove('happy', 'angry', 'sad', 'anxious', 'dizzy', 'loneliness');
-        if (this.value !== '--') {
-          body.classList.add(this.value);
+        if (mood.value !== '--') {
+            body.classList.add(mood.value);
         }
-        showMoodCard(this.value);
-      });
-  
-      // Hide all cards initially
-      showMoodCard(mood.value);
+
+        mood.addEventListener('change', function () {
+            body.classList.remove('happy', 'angry', 'sad', 'anxious', 'dizzy', 'loneliness');
+            if (this.value !== '--') {
+                body.classList.add(this.value);
+            }
+            showMoodCard(this.value);
+        });
+
+        // Hide all cards initially
+        showMoodCard(mood.value);
     }
-  
+
     function showMoodCard(selectedMood) {
-      for (let i = 1; i <= 6; i++) {
-        const div = document.getElementById(`div${i}`);
-        if (div) div.style.display = 'none';
-      }
-  
-      const moodToDiv = {
-        happy: 'div1',
-        angry: 'div2',
-        sad: 'div3',
-        anxious: 'div4',
-        dizzy: 'div5',
-        loneliness: 'div6',
-      };
-  
-      const showDivId = moodToDiv[selectedMood];
-      if (showDivId) {
-        const div = document.getElementById(showDivId);
-        if (div) div.style.display = 'block';
-      }
+        for (let i = 1; i <= 6; i++) {
+            const div = document.getElementById(`div${i}`);
+            if (div) div.style.display = 'none';
+        }
+
+        const moodToDiv = {
+            happy: 'div1',
+            angry: 'div2',
+            sad: 'div3',
+            anxious: 'div4',
+            dizzy: 'div5',
+            loneliness: 'div6',
+        };
+
+        const showDivId = moodToDiv[selectedMood];
+        if (showDivId) {
+            const div = document.getElementById(showDivId);
+            if (div) div.style.display = 'block';
+        }
     }
-  });
-  
-  // === Floating Emoji Animation ===
-  const emojis = ['😊', '😡', '😢', '😱', '😵', '🥰'];
-  const container = document.getElementById('emoji-float-container');
-  
-  function createFloatingEmoji() {
+});
+
+// === Floating Emoji Animation ===
+const emojis = ['😊', '😡', '😢', '😱', '😵', '🥰'];
+const container = document.getElementById('emoji-float-container');
+
+function createFloatingEmoji() {
     if (!container) return;
     const emoji = document.createElement('span');
     emoji.className = 'floating-emoji';
@@ -58,13 +173,13 @@ document.addEventListener('DOMContentLoaded', function () {
     emoji.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem';
     emoji.style.animationDuration = (Math.random() * 2 + 4) + 's';
     container.appendChild(emoji);
-  
+
     setTimeout(() => {
-      emoji.remove();
+        emoji.remove();
     }, 6000);
-  }
-  
-  setInterval(createFloatingEmoji, 700);
+}
+
+setInterval(createFloatingEmoji, 700);
 
 // Global fullscreen toggle
 document.addEventListener('keydown', (e) => {
@@ -72,103 +187,103 @@ document.addEventListener('keydown', (e) => {
         toggleFullscreen();
     }
 });
-  
-  
-  // === Relaxing Games (Game.html only) ===
-  document.addEventListener("DOMContentLoaded", () => {
+
+
+// === Relaxing Games (Game.html only) ===
+document.addEventListener("DOMContentLoaded", () => {
     const bubbleBtn = document.querySelector(".play-bubble-pop");
     const geometryBtn = document.querySelector(".play-geometry-dash");
-  
+
     const bubbleContainer = document.getElementById("bubble-pop-container");
     const dashContainer = document.getElementById("geometry-dash-container");
-  
+
     const huntBtn = document.querySelector(".play-hunt-chase");
     const huntContainer = document.getElementById("hunt-chase-container");
-  
+
     // Only attach game logic if buttons exist (i.e., on Game.html)
     if (bubbleBtn && geometryBtn && bubbleContainer && dashContainer) {
-      bubbleBtn.addEventListener("click", () => {
-        bubbleContainer.style.display = "block";
-        dashContainer.style.display = "none";
-        startBubblePopGame();
-      });
-  
-      geometryBtn.addEventListener("click", () => {
-        dashContainer.style.display = "block";
-        bubbleContainer.style.display = "none";
-        startGeometryDash();
-      });
+        bubbleBtn.addEventListener("click", () => {
+            bubbleContainer.style.display = "block";
+            dashContainer.style.display = "none";
+            startBubblePopGame();
+        });
 
-      huntBtn.addEventListener("click", () => {
-        huntContainer.style.display = "block";
-        bubbleContainer.style.display = "none";
-        dashContainer.style.display = "none";
-        startHuntChaseGame();
-      });
+        geometryBtn.addEventListener("click", () => {
+            dashContainer.style.display = "block";
+            bubbleContainer.style.display = "none";
+            startGeometryDash();
+        });
+
+        huntBtn.addEventListener("click", () => {
+            huntContainer.style.display = "block";
+            bubbleContainer.style.display = "none";
+            dashContainer.style.display = "none";
+            startHuntChaseGame();
+        });
     }
-  });
-  
-  
-  // === Bubble Pop Game ===
-  function startBubblePopGame() {
+});
+
+
+// === Bubble Pop Game ===
+function startBubblePopGame() {
     const canvas = document.getElementById("bubbleCanvas");
     const ctx = canvas.getContext("2d");
     const scoreDisplay = document.getElementById("score");
-  
+
     let bubbles = [];
     let score = 0;
-  
+
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-  
+
     function createBubble() {
-      const radius = Math.random() * 20 + 10;
-      const x = Math.random() * (canvas.width - 2 * radius) + radius;
-      const y = canvas.height + radius;
-      const speed = Math.random() * 2 + 1;
-      bubbles.push({ x, y, radius, speed });
+        const radius = Math.random() * 20 + 10;
+        const x = Math.random() * (canvas.width - 2 * radius) + radius;
+        const y = canvas.height + radius;
+        const speed = Math.random() * 2 + 1;
+        bubbles.push({ x, y, radius, speed });
     }
-  
+
     function drawBubble(bubble) {
-      ctx.beginPath();
-      ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(106, 199, 255, 0.7)";
-      ctx.fill();
-      ctx.strokeStyle = "#3a7ca5";
-      ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(106, 199, 255, 0.7)";
+        ctx.fill();
+        ctx.strokeStyle = "#3a7ca5";
+        ctx.stroke();
     }
-  
+
     function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-      bubbles.forEach((bubble, index) => {
-        bubble.y -= bubble.speed;
-        drawBubble(bubble);
-        if (bubble.y + bubble.radius < 0) {
-          bubbles.splice(index, 1);
-        }
-      });
-  
-      requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        bubbles.forEach((bubble, index) => {
+            bubble.y -= bubble.speed;
+            drawBubble(bubble);
+            if (bubble.y + bubble.radius < 0) {
+                bubbles.splice(index, 1);
+            }
+        });
+
+        requestAnimationFrame(animate);
     }
-  
+
     canvas.onclick = function (e) {
-      const rect = canvas.getBoundingClientRect();
-      const xClick = e.clientX - rect.left;
-      const yClick = e.clientY - rect.top;
-  
-      bubbles.forEach((bubble, index) => {
-        const dx = bubble.x - xClick;
-        const dy = bubble.y - yClick;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < bubble.radius) {
-          bubbles.splice(index, 1);
-          score++;
-          scoreDisplay.textContent = `Score: ${score}`;
-        }
-      });
+        const rect = canvas.getBoundingClientRect();
+        const xClick = e.clientX - rect.left;
+        const yClick = e.clientY - rect.top;
+
+        bubbles.forEach((bubble, index) => {
+            const dx = bubble.x - xClick;
+            const dy = bubble.y - yClick;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < bubble.radius) {
+                bubbles.splice(index, 1);
+                score++;
+                scoreDisplay.textContent = `Score: ${score}`;
+            }
+        });
     };
-  
+
     // Reset
     bubbles = [];
     score = 0;
@@ -176,11 +291,11 @@ document.addEventListener('keydown', (e) => {
     clearInterval(window.bubbleInterval);
     window.bubbleInterval = setInterval(createBubble, 500);
     animate();
-  }
-  
-  
-  // === Geometry Dash Game ===
-  // Geometry Dash Simple Clone
+}
+
+
+// === Geometry Dash Game ===
+// Geometry Dash Simple Clone
 const gdashCanvas = document.getElementById('geometryDash');
 if (gdashCanvas) {
     const ctx = gdashCanvas.getContext('2d');
@@ -304,7 +419,7 @@ if (gdashCanvas) {
         if (e.code === 'KeyF') toggleFullscreen();
     });
     gdashCanvas.addEventListener('mousedown', jump);
-    gdashCanvas.addEventListener('touchstart', function(e) {
+    gdashCanvas.addEventListener('touchstart', function (e) {
         e.preventDefault();
         jump();
     });
@@ -312,7 +427,7 @@ if (gdashCanvas) {
     // Start the game
     loop();
 }
-  
+
 // === Hunt & Chase Game ===
 let huntGameActive = false;
 let huntGameState = null;
@@ -357,7 +472,7 @@ function startHuntChaseGame() {
     const ctx = canvas.getContext('2d');
     const statusDisplay = document.getElementById('hunt-status');
     const scoreDisplay = document.getElementById('hunt-score');
-    
+
     // Game state
     let gameStarted = false;
     let gameOver = false;
@@ -365,7 +480,7 @@ function startHuntChaseGame() {
     let timeElapsed = 0;
     let hunterInLightTime = 0;
     let hunterInLight = false;
-    
+
     // Players
     const hunter = {
         x: 100,
@@ -376,7 +491,7 @@ function startHuntChaseGame() {
         keys: { w: false, a: false, s: false, d: false },
         lastMove: 'd'
     };
-    
+
     const prey = {
         x: canvas.width - 100,
         y: canvas.height - 100,
@@ -386,7 +501,7 @@ function startHuntChaseGame() {
         keys: { up: false, left: false, down: false, right: false },
         lastMove: 'left'
     };
-    
+
     // Obstacles
     const obstacles = [
         { x: 200, y: 150, w: 80, h: 20 },
@@ -399,18 +514,18 @@ function startHuntChaseGame() {
     function drawPlayer(player) {
         if (player.color === '#e74c3c' && hunterImg.complete) {
             // Draw hunter image
-            ctx.drawImage(hunterImg, player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            ctx.drawImage(hunterImg, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
         } else if (player.color === '#3498db' && preyImg.complete) {
             // Draw prey image
-            ctx.drawImage(preyImg, player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            ctx.drawImage(preyImg, player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
         } else {
             // Fallback to colored rectangles
             ctx.fillStyle = player.color;
-            ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+            ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
         }
         // Add a small indicator for direction
         ctx.fillStyle = '#fff';
-        ctx.fillRect(player.x - 2, player.y - player.size/2 - 2, 4, 4);
+        ctx.fillRect(player.x - 2, player.y - player.size / 2 - 2, 4, 4);
     }
 
     function drawObstacles() {
@@ -422,10 +537,10 @@ function startHuntChaseGame() {
 
     function checkCollisionRect(x, y, size, obstacle) {
         return (
-            x + size/2 > obstacle.x &&
-            x - size/2 < obstacle.x + obstacle.w &&
-            y + size/2 > obstacle.y &&
-            y - size/2 < obstacle.y + obstacle.h
+            x + size / 2 > obstacle.x &&
+            x - size / 2 < obstacle.x + obstacle.w &&
+            y + size / 2 > obstacle.y &&
+            y - size / 2 < obstacle.y + obstacle.h
         );
     }
 
@@ -452,10 +567,10 @@ function startHuntChaseGame() {
             if (player.keys.right) { newX += player.speed; player.lastMove = 'right'; moved = true; }
         }
         // Boundary checking
-        if (newX - player.size/2 < 0) newX = player.size/2;
-        if (newX + player.size/2 > canvas.width) newX = canvas.width - player.size/2;
-        if (newY - player.size/2 < 0) newY = player.size/2;
-        if (newY + player.size/2 > canvas.height) newY = canvas.height - player.size/2;
+        if (newX - player.size / 2 < 0) newX = player.size / 2;
+        if (newX + player.size / 2 > canvas.width) newX = canvas.width - player.size / 2;
+        if (newY - player.size / 2 < 0) newY = player.size / 2;
+        if (newY + player.size / 2 > canvas.height) newY = canvas.height - player.size / 2;
         // Wall collision: try X move, then Y move, revert if collides
         let collided = false;
         for (let obs of obstacles) {
@@ -476,112 +591,112 @@ function startHuntChaseGame() {
     function drawTorchEffect() {
         // Draw white torch light directly on canvas
         ctx.save();
-        
+
         // Create torch light area
         let angle = 0;
         switch (prey.lastMove) {
-            case 'up': angle = -Math.PI/2; break;
-            case 'down': angle = Math.PI/2; break;
+            case 'up': angle = -Math.PI / 2; break;
+            case 'down': angle = Math.PI / 2; break;
             case 'left': angle = Math.PI; break;
             case 'right': angle = 0; break;
             default: angle = 0;
         }
         const torchLength = 180;
-        const torchWidth = Math.PI/2;  // Wider torch angle
-        
+        const torchWidth = Math.PI / 2;  // Wider torch angle
+
         // Create gradient for torch light
         const gradient = ctx.createRadialGradient(prey.x, prey.y, 0, prey.x, prey.y, torchLength);
         gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
         gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
-        
+
         // Draw torch cone
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.moveTo(prey.x, prey.y);
-        ctx.arc(prey.x, prey.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
+        ctx.arc(prey.x, prey.y, torchLength, angle - torchWidth / 2, angle + torchWidth / 2);
         ctx.lineTo(prey.x, prey.y);
         ctx.closePath();
         ctx.fill();
-        
+
         // Draw obstacles to block light
         ctx.fillStyle = '#666666';
         obstacles.forEach(obs => {
             ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
         });
-        
+
         ctx.restore();
     }
 
     function isHunterInTorch() {
         let angle = 0;
         switch (prey.lastMove) {
-            case 'up': angle = -Math.PI/2; break;
-            case 'down': angle = Math.PI/2; break;
+            case 'up': angle = -Math.PI / 2; break;
+            case 'down': angle = Math.PI / 2; break;
             case 'left': angle = Math.PI; break;
             case 'right': angle = 0; break;
             default: angle = 0;
         }
         const torchLength = 180;
-        const torchWidth = Math.PI/2;  // Wider torch angle
+        const torchWidth = Math.PI / 2;  // Wider torch angle
 
         // Vector from prey to hunter
         const dx = hunter.x - prey.x;
         const dy = hunter.y - prey.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist > torchLength) return false; // Out of range
-        
+
         // Check if line of sight is blocked by obstacles
-        const steps = Math.max(10, dist/10);
+        const steps = Math.max(10, dist / 10);
         for (let i = 1; i <= steps; i++) {
             const t = i / steps;
             const checkX = prey.x + dx * t;
             const checkY = prey.y + dy * t;
-            
+
             for (let obs of obstacles) {
                 if (checkCollisionRect(checkX, checkY, 5, obs)) {
                     return false; // Line of sight blocked
                 }
             }
         }
-        
+
         // Angle from prey to hunter
         let hunterAngle = Math.atan2(dy, dx);
         // Normalize angles to [-PI, PI]
-        let diff = ((hunterAngle - angle + Math.PI*3) % (Math.PI*2)) - Math.PI;
-        return Math.abs(diff) < torchWidth/2;
+        let diff = ((hunterAngle - angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        return Math.abs(diff) < torchWidth / 2;
     }
 
     function drawGame() {
         // Clear canvas with grey background for both players
         ctx.fillStyle = '#666666'; // Grey background for both hunter and prey
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Draw torch effect (only for prey)
         if (!mpGameActive || mpRole === 'prey') {
             drawTorchEffect();
         }
-        
+
         // Draw obstacles
         drawObstacles();
-        
+
         // Draw players
         drawPlayer(hunter);
         drawPlayer(prey);
-        
+
         // Draw timer (only in single player)
         if (!mpGameActive && gameStarted && !gameOver) {
             ctx.fillStyle = '#fff';
             ctx.font = '20px Arial';
             ctx.fillText(`Time: ${Math.floor(timeElapsed)}s`, 10, 30);
         }
-        
+
         // Draw hunter in light timer
         if (hunterInLight && !gameOver && (!mpGameActive || mpRole === 'prey')) {
             ctx.fillStyle = '#fff';
             ctx.font = '20px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(`Hunter spotted! ${(1 - hunterInLightTime).toFixed(1)}s`, canvas.width/2, 30);
+            ctx.fillText(`Hunter spotted! ${(1 - hunterInLightTime).toFixed(1)}s`, canvas.width / 2, 30);
             ctx.textAlign = 'left';
         }
     }
@@ -599,19 +714,19 @@ function startHuntChaseGame() {
             ctx.fillStyle = '#fff';
             ctx.font = '48px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(winner, canvas.width/2, canvas.height/2);
+            ctx.fillText(winner, canvas.width / 2, canvas.height / 2);
             if (!mpGameActive) {
                 ctx.font = '24px Arial';
-                ctx.fillText('Press SPACE to restart', canvas.width/2, canvas.height/2 + 50);
+                ctx.fillText('Press SPACE to restart', canvas.width / 2, canvas.height / 2 + 50);
             }
             ctx.textAlign = 'left';
             return;
         }
-        
+
         // Update players
         updatePlayer(hunter);
         updatePlayer(prey);
-        
+
         // Check if hunter is in torchlight
         const hunterInTorch = isHunterInTorch();
         if (hunterInTorch) {
@@ -630,21 +745,21 @@ function startHuntChaseGame() {
             hunterInLight = false;
             hunterInLightTime = 0;
         }
-        
+
         // Check for collision
         if (checkPlayerCollision()) {
             gameOver = true;
             winner = 'Hunter Wins!';
             statusDisplay.textContent = 'Hunter caught the prey!';
         }
-        
+
         // Check if prey survived for 60 seconds
         if (timeElapsed >= 60) {
             gameOver = true;
             winner = 'Prey Wins!';
             statusDisplay.textContent = 'Prey survived!';
         }
-        
+
         drawGame();
         requestAnimationFrame(gameLoop);
     }
@@ -661,10 +776,10 @@ function startHuntChaseGame() {
             timeElapsed += 0.1;
         }
     }, 100);
-    
+
     // Start the game loop
     gameLoop();
-    
+
     // Cleanup function
     return () => {
         clearInterval(timer);
@@ -690,7 +805,7 @@ document.addEventListener('keydown', (e) => {
         }
         return;
     }
-    
+
     // Handle fullscreen toggle
     if (e.code === 'KeyF') {
         toggleFullscreen();
@@ -752,7 +867,7 @@ function wsOnMessageHandler(event) {
             ul.appendChild(li);
         });
     }
-    
+
     function showInvite(fromName, fromId) {
         const modal = document.getElementById('multiplayer-modal');
         modal.style.display = 'block';
@@ -764,19 +879,19 @@ function wsOnMessageHandler(event) {
         ul.appendChild(msg);
         const acceptBtn = document.createElement('button');
         acceptBtn.textContent = 'Accept';
-        acceptBtn.onclick = function() {
+        acceptBtn.onclick = function () {
             ws.send(JSON.stringify({ type: 'acceptInvite', from: fromId }));
             modal.style.display = 'none';
         };
         const declineBtn = document.createElement('button');
         declineBtn.textContent = 'Decline';
-        declineBtn.onclick = function() {
+        declineBtn.onclick = function () {
             modal.style.display = 'none';
         };
         ul.appendChild(acceptBtn);
         ul.appendChild(declineBtn);
     }
-    
+
     function showReplayInvite(fromName, fromId) {
         const modal = document.getElementById('multiplayer-modal');
         modal.style.display = 'block';
@@ -788,13 +903,13 @@ function wsOnMessageHandler(event) {
         ul.appendChild(msg);
         const acceptBtn = document.createElement('button');
         acceptBtn.textContent = 'Accept Replay';
-        acceptBtn.onclick = function() {
+        acceptBtn.onclick = function () {
             ws.send(JSON.stringify({ type: 'replayResponse', targetId: fromId, accepted: true }));
             modal.style.display = 'none';
         };
         const declineBtn = document.createElement('button');
         declineBtn.textContent = 'Decline Replay';
-        declineBtn.onclick = function() {
+        declineBtn.onclick = function () {
             ws.send(JSON.stringify({ type: 'replayResponse', targetId: fromId, accepted: false }));
             modal.style.display = 'none';
         };
@@ -868,24 +983,24 @@ function wsOnMessageHandler(event) {
                 endMsg = 'You were spotted! You Lose!';
             }
         }
-        ctx.fillText(endMsg, canvas.width/2, canvas.height/2);
-        
+        ctx.fillText(endMsg, canvas.width / 2, canvas.height / 2);
+
         // Add replay button
         ctx.font = '20px Arial';
-        ctx.fillText('Click R for Replay', canvas.width/2, canvas.height/2 + 50);
+        ctx.fillText('Click R for Replay', canvas.width / 2, canvas.height / 2 + 50);
         ctx.textAlign = 'left';
     }
-    
+
     if (msg.type === 'replayInvite') {
         showReplayInvite(msg.fromName, msg.from);
     }
-    
+
     if (msg.type === 'replayResponse') {
         if (msg.accepted) {
             // Switch roles for fair replay
             mpRole = mpRole === 'hunter' ? 'prey' : 'hunter';
             myRole = mpRole;
-            
+
             // Restart the game with the same opponent
             mpGameActive = true;
             mpOpponentState = null;
@@ -906,16 +1021,16 @@ function wsOnMessageHandler(event) {
             ctx.fillStyle = '#fff';
             ctx.font = '24px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Replay request rejected', canvas.width/2, canvas.height/2);
+            ctx.fillText('Replay request rejected', canvas.width / 2, canvas.height / 2);
             ctx.textAlign = 'left';
         }
     }
-    
+
     if (msg.type === 'replayStart') {
         // Switch roles for fair replay
         mpRole = msg.role;
         myRole = mpRole;
-        
+
         // Restart the game with the same opponent
         mpGameActive = true;
         mpOpponentState = null;
@@ -934,7 +1049,7 @@ let namePrompted = false;
 let enteredName = '';
 const multiplayerBtn = document.querySelector('.play-hunt-chase-multiplayer');
 if (multiplayerBtn) {
-    multiplayerBtn.onclick = function() {
+    multiplayerBtn.onclick = function () {
         if (!namePrompted) {
             enteredName = prompt('Enter your name for multiplayer:');
             if (enteredName && enteredName.trim().length > 0) {
@@ -946,7 +1061,7 @@ if (multiplayerBtn) {
         if (!ws) {
             ws = new WebSocket(WS_SERVER);
             ws.onmessage = wsOnMessageHandler;
-            ws.onopen = function() {
+            ws.onopen = function () {
                 ws.send(JSON.stringify({ type: 'setName', name: enteredName.trim() }));
             };
         } else if (ws.readyState === 1) {
@@ -994,103 +1109,103 @@ function startMultiplayerHuntChase() {
             ws.send(JSON.stringify({ type: 'replayInvite', targetId: opponentId }));
             return;
         }
-        
+
         // Handle fullscreen toggle
         if (e.code === 'KeyF') {
             toggleFullscreen();
             return;
         }
-        
+
         handleKey(e, true);
     });
     window.addEventListener('keyup', e => handleKey(e, false));
 
     function checkCollisionRect(x, y, size, obstacle) {
         return (
-            x + size/2 > obstacle.x &&
-            x - size/2 < obstacle.x + obstacle.w &&
-            y + size/2 > obstacle.y &&
-            y - size/2 < obstacle.y + obstacle.h
+            x + size / 2 > obstacle.x &&
+            x - size / 2 < obstacle.x + obstacle.w &&
+            y + size / 2 > obstacle.y &&
+            y - size / 2 < obstacle.y + obstacle.h
         );
     }
 
     function drawTorchEffect(ctx, preyState) {
         // Draw white torch light directly on canvas
         ctx.save();
-        
+
         // Create torch light area
         let angle = 0;
         if (preyState.lastMove) {
             switch (preyState.lastMove) {
-                case 'up': angle = -Math.PI/2; break;
-                case 'down': angle = Math.PI/2; break;
+                case 'up': angle = -Math.PI / 2; break;
+                case 'down': angle = Math.PI / 2; break;
                 case 'left': angle = Math.PI; break;
                 case 'right': angle = 0; break;
                 default: angle = 0;
             }
         }
         const torchLength = 180;
-        const torchWidth = Math.PI/2;  // Wider torch angle
-        
+        const torchWidth = Math.PI / 2;  // Wider torch angle
+
         // Create gradient for torch light
         const gradient = ctx.createRadialGradient(preyState.x, preyState.y, 0, preyState.x, preyState.y, torchLength);
         gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
         gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
-        
+
         // Draw torch cone
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.moveTo(preyState.x, preyState.y);
-        ctx.arc(preyState.x, preyState.y, torchLength, angle - torchWidth/2, angle + torchWidth/2);
+        ctx.arc(preyState.x, preyState.y, torchLength, angle - torchWidth / 2, angle + torchWidth / 2);
         ctx.lineTo(preyState.x, preyState.y);
         ctx.closePath();
         ctx.fill();
-        
+
         // Draw obstacles to block light
         ctx.fillStyle = '#666666';
         obstacles.forEach(obs => {
             ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
         });
-        
+
         ctx.restore();
     }
 
     function isHunterInTorch(prey, hunter) {
         if (!prey || !hunter) return false;
-        
+
         let angle = 0;
         switch (prey.lastMove) {
-            case 'up': angle = -Math.PI/2; break;
-            case 'down': angle = Math.PI/2; break;
+            case 'up': angle = -Math.PI / 2; break;
+            case 'down': angle = Math.PI / 2; break;
             case 'left': angle = Math.PI; break;
             case 'right': angle = 0; break;
             default: angle = 0;
         }
         const torchLength = 180;
-        const torchWidth = Math.PI/2;  // Wider torch angle
+        const torchWidth = Math.PI / 2;  // Wider torch angle
         const dx = hunter.x - prey.x;
         const dy = hunter.y - prey.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist > torchLength) return false;
-        
+
         // Check line of sight for obstacles
-        const steps = Math.max(10, dist/10);
+        const steps = Math.max(10, dist / 10);
         for (let i = 1; i <= steps; i++) {
             const t = i / steps;
             const checkX = prey.x + dx * t;
             const checkY = prey.y + dy * t;
-            
+
             for (let obs of obstacles) {
                 if (checkCollisionRect(checkX, checkY, 5, obs)) {
                     return false;
                 }
             }
         }
-        
+
         let hunterAngle = Math.atan2(dy, dx);
-        let diff = ((hunterAngle - angle + Math.PI*3) % (Math.PI*2)) - Math.PI;
-        return Math.abs(diff) < torchWidth/2;
+        let diff = ((hunterAngle - angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        return Math.abs(diff) < torchWidth / 2;
     }
 
     function gameLoop() {
@@ -1098,11 +1213,11 @@ function startMultiplayerHuntChase() {
         // Set grey background for both players
         ctx.fillStyle = '#666666';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Update local player position
         let newX = mpLocalState.x;
         let newY = mpLocalState.y;
-        
+
         // Update last move direction
         if (mpRole === 'hunter') {
             if (mpLocalState.keys.w) { newY -= speed; mpLocalState.lastMove = 'w'; }
@@ -1115,13 +1230,13 @@ function startMultiplayerHuntChase() {
             if (mpLocalState.keys.left) { newX -= speed; mpLocalState.lastMove = 'left'; }
             if (mpLocalState.keys.right) { newX += speed; mpLocalState.lastMove = 'right'; }
         }
-        
+
         // Boundary checking
-        if (newX - size/2 < 0) newX = size/2;
-        if (newX + size/2 > canvas.width) newX = canvas.width - size/2;
-        if (newY - size/2 < 0) newY = size/2;
-        if (newY + size/2 > canvas.height) newY = canvas.height - size/2;
-        
+        if (newX - size / 2 < 0) newX = size / 2;
+        if (newX + size / 2 > canvas.width) newX = canvas.width - size / 2;
+        if (newY - size / 2 < 0) newY = size / 2;
+        if (newY + size / 2 > canvas.height) newY = canvas.height - size / 2;
+
         // Wall collision checking
         let collided = false;
         for (let obs of obstacles) {
@@ -1135,21 +1250,21 @@ function startMultiplayerHuntChase() {
         if (!collided) mpLocalState.y = newY;
 
         // Send updated state to opponent
-        ws.send(JSON.stringify({ 
-            type: 'gameUpdate', 
-            state: { 
-                x: mpLocalState.x, 
-                y: mpLocalState.y, 
-                role: mpRole, 
-                lastMove: mpLocalState.lastMove 
-            } 
+        ws.send(JSON.stringify({
+            type: 'gameUpdate',
+            state: {
+                x: mpLocalState.x,
+                y: mpLocalState.y,
+                role: mpRole,
+                lastMove: mpLocalState.lastMove
+            }
         }));
 
         // 4. Only the prey sees the torch effect
         if (mpRole === 'prey') {
             drawTorchEffect(ctx, mpLocalState);
         }
-        
+
         // Draw torch effect for both hunter and prey
         if (mpOpponentState) {
             // Find the prey's state (either local or opponent)
@@ -1163,19 +1278,19 @@ function startMultiplayerHuntChase() {
                 drawTorchEffect(ctx, preyState);
             }
         }
-        
+
         // Draw obstacles (for both roles)
         ctx.fillStyle = '#95a5a6';
         obstacles.forEach(obs => ctx.fillRect(obs.x, obs.y, obs.w, obs.h));
 
         // Draw local player
         if (mpRole === 'hunter' && hunterImg.complete) {
-            ctx.drawImage(hunterImg, mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
+            ctx.drawImage(hunterImg, mpLocalState.x - size / 2, mpLocalState.y - size / 2, size, size);
         } else if (mpRole === 'prey' && preyImg.complete) {
-            ctx.drawImage(preyImg, mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
+            ctx.drawImage(preyImg, mpLocalState.x - size / 2, mpLocalState.y - size / 2, size, size);
         } else {
             ctx.fillStyle = mpRole === 'hunter' ? '#e74c3c' : '#3498db';
-            ctx.fillRect(mpLocalState.x - size/2, mpLocalState.y - size/2, size, size);
+            ctx.fillRect(mpLocalState.x - size / 2, mpLocalState.y - size / 2, size, size);
         }
 
         // 3. Prey cannot see hunter unless hunter is in torch
@@ -1183,20 +1298,20 @@ function startMultiplayerHuntChase() {
             if (mpRole === 'prey' && mpOpponentState.role === 'hunter') {
                 if (isHunterInTorch(mpLocalState, mpOpponentState)) {
                     if (hunterImg.complete) {
-                        ctx.drawImage(hunterImg, mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                        ctx.drawImage(hunterImg, mpOpponentState.x - size / 2, mpOpponentState.y - size / 2, size, size);
                     } else {
                         ctx.fillStyle = '#e74c3c';
-                        ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                        ctx.fillRect(mpOpponentState.x - size / 2, mpOpponentState.y - size / 2, size, size);
                     }
                 }
             } else {
                 if (mpOpponentState.role === 'hunter' && hunterImg.complete) {
-                    ctx.drawImage(hunterImg, mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                    ctx.drawImage(hunterImg, mpOpponentState.x - size / 2, mpOpponentState.y - size / 2, size, size);
                 } else if (mpOpponentState.role === 'prey' && preyImg.complete) {
-                    ctx.drawImage(preyImg, mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                    ctx.drawImage(preyImg, mpOpponentState.x - size / 2, mpOpponentState.y - size / 2, size, size);
                 } else {
                     ctx.fillStyle = mpOpponentState.role === 'hunter' ? '#e74c3c' : '#3498db';
-                    ctx.fillRect(mpOpponentState.x - size/2, mpOpponentState.y - size/2, size, size);
+                    ctx.fillRect(mpOpponentState.x - size / 2, mpOpponentState.y - size / 2, size, size);
                 }
             }
         }
@@ -1212,7 +1327,7 @@ function startMultiplayerHuntChase() {
                     mpHunterInLightTime += 0.016;
                     if (mpHunterInLightTime >= 1) {
                         mpGameActive = false;
-                        ws.send(JSON.stringify({ 
+                        ws.send(JSON.stringify({
                             type: 'endGame',
                             winner: 'prey',
                             loserId: myId // prey sends their own id as loser
@@ -1223,7 +1338,7 @@ function startMultiplayerHuntChase() {
                 ctx.fillStyle = '#fff';
                 ctx.font = '20px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(`Hunter spotted! ${(1 - mpHunterInLightTime).toFixed(1)}s`, canvas.width/2, 30);
+                ctx.fillText(`Hunter spotted! ${(1 - mpHunterInLightTime).toFixed(1)}s`, canvas.width / 2, 30);
                 ctx.textAlign = 'left';
             } else {
                 mpHunterInLight = false;
@@ -1234,10 +1349,10 @@ function startMultiplayerHuntChase() {
         if (mpOpponentState) {
             const dx = mpLocalState.x - mpOpponentState.x;
             const dy = mpLocalState.y - mpOpponentState.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
+            const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < size) {
                 mpGameActive = false;
-                ws.send(JSON.stringify({ 
+                ws.send(JSON.stringify({
                     type: 'endGame',
                     winner: mpRole === 'hunter' ? 'hunter' : 'prey',
                     loserId: myId // always send your own id as loser
@@ -1247,12 +1362,253 @@ function startMultiplayerHuntChase() {
         }
         mpGameLoopId = requestAnimationFrame(gameLoop);
     }
-    
+
     gameLoop();
 }
 
+// === REAL-TIME CHAT FUNCTIONALITY ===
+document.addEventListener('DOMContentLoaded', function () {
+    // Chat elements
+    const usernameInput = document.getElementById('username-input');
+    const joinChatBtn = document.getElementById('join-chat-btn');
+    const usernameSetup = document.getElementById('username-setup');
+    const chatControls = document.getElementById('chat-controls');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const chatMessages = document.getElementById('chat-messages');
+    
+    // Chat state
+    let currentUser = '';
+    let currentUserId = '';
+    let chatSocket = null;
+    let isConnected = false;
+    
+    // WebSocket URL - change this if running on a different server
+    const CHAT_SERVER_URL = 'ws://localhost:8089';
+    
+    // Initialize chat
+    if (usernameInput && joinChatBtn) {
+        // Join chat functionality
+        joinChatBtn.addEventListener('click', joinRealTimeChat);
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                joinRealTimeChat();
+            }
+        });
+        
+        // Send message functionality
+        if (sendBtn && messageInput) {
+            sendBtn.addEventListener('click', sendRealTimeMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendRealTimeMessage();
+                }
+            });
+        }
+        
+        // Try to connect to chat server on page load
+        connectToChatServer();
+    }
+    
+    function connectToChatServer() {
+        try {
+            chatSocket = new WebSocket(CHAT_SERVER_URL);
+            
+            chatSocket.onopen = function(event) {
+                console.log('Connected to chat server');
+                isConnected = true;
+                updateConnectionStatus('Connected to chat server ✅');
+            };
+            
+            chatSocket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleChatMessage(data);
+                } catch (error) {
+                    console.error('Error parsing chat message:', error);
+                }
+            };
+            
+            chatSocket.onclose = function(event) {
+                console.log('Disconnected from chat server');
+                isConnected = false;
+                updateConnectionStatus('Disconnected from chat server ❌');
+                
+                // Try to reconnect after 3 seconds
+                setTimeout(() => {
+                    if (!isConnected) {
+                        console.log('Attempting to reconnect...');
+                        connectToChatServer();
+                    }
+                }, 3000);
+            };
+            
+            chatSocket.onerror = function(error) {
+                console.error('Chat WebSocket error:', error);
+                updateConnectionStatus('Connection error ❌');
+            };
+            
+        } catch (error) {
+            console.error('Failed to connect to chat server:', error);
+            updateConnectionStatus('Failed to connect ❌');
+        }
+    }
+    
+    function handleChatMessage(data) {
+        switch (data.type) {
+            case 'welcome':
+                updateConnectionStatus('Connected ✅');
+                // Load message history
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(msg => {
+                        if (msg.type === 'system') {
+                            addSystemMessage(msg.message, msg.timestamp);
+                        } else if (msg.type === 'message') {
+                            // History messages are never "mine" since we just joined
+                            addMessage(msg.message, msg.username, false, msg.timestamp);
+                        }
+                    });
+                }
+                updateOnlineCount(data.onlineCount);
+                break;
+                
+            case 'user_id':
+                // Server sends us our user ID after joining
+                currentUserId = data.userId;
+                console.log('Received user ID:', currentUserId);
+                break;
+                
+            case 'system':
+                addSystemMessage(data.message, data.timestamp);
+                updateOnlineCount(data.onlineCount);
+                break;
+                
+            case 'message':
+                const isMyMessage = data.userId === currentUserId;
+                console.log('Message from:', data.username, 'IsMyMessage:', isMyMessage, 'MyID:', currentUserId, 'MsgID:', data.userId);
+                addMessage(data.message, data.username, isMyMessage, data.timestamp);
+                break;
+                
+            case 'pong':
+                // Keep-alive response
+                break;
+                
+            default:
+                console.log('Unknown message type:', data.type);
+        }
+    }
+    
+    function joinRealTimeChat() {
+        const username = usernameInput.value.trim();
+        if (username.length < 2) {
+            alert('Please enter a name with at least 2 characters');
+            return;
+        }
+        
+        if (!isConnected) {
+            alert('Not connected to chat server. Please wait...');
+            return;
+        }
+        
+        currentUser = username;
+        usernameSetup.style.display = 'none';
+        chatControls.style.display = 'flex';
+        
+        // Send join message to server
+        chatSocket.send(JSON.stringify({
+            type: 'join',
+            username: username
+        }));
+        
+        // Focus on message input
+        messageInput.focus();
+    }
+    
+    function sendRealTimeMessage() {
+        const message = messageInput.value.trim();
+        if (!message || !isConnected) return;
+        
+        // Send message to server
+        chatSocket.send(JSON.stringify({
+            type: 'message',
+            message: message
+        }));
+        
+        // Clear input
+        messageInput.value = '';
+    }
+    
+    function addMessage(text, username, isCurrentUser = false, timestamp = null) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `simple-message ${isCurrentUser ? 'my-message' : 'other'}`;
+        
+        const time = timestamp ? 
+            new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+            new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.innerHTML = `
+            <div class="simple-message-header">
+                <span class="simple-username">${username}</span>
+                <span class="simple-timestamp">${time}</span>
+            </div>
+            <div class="simple-message-text">${text}</div>
+        `;
+        
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    function addSystemMessage(text, timestamp = null) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'simple-message system';
+        messageDiv.innerHTML = `
+            <div class="simple-message-content">
+                ${text}
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    function updateConnectionStatus(status) {
+        // Update chat header with connection status
+        const header = document.querySelector('.simple-chat-header p');
+        if (header) {
+            header.textContent = status;
+        }
+    }
+    
+    function updateOnlineCount(count) {
+        // Update header with online count
+        const header = document.querySelector('.simple-chat-header h3');
+        if (header && count !== undefined) {
+            header.textContent = `Community Chat (${count} online)`;
+        }
+    }
+    
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Send ping every 30 seconds to keep connection alive
+    setInterval(() => {
+        if (isConnected && chatSocket) {
+            chatSocket.send(JSON.stringify({ type: 'ping' }));
+        }
+    }, 30000);
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        if (chatSocket) {
+            chatSocket.close();
+        }
+    });
+});
+
 // Prevent scrolling when playing Hunt & Chase (multiplayer or single player)
-window.addEventListener('keydown', function(e) {
+window.addEventListener('keydown', function (e) {
     if (
         (huntGameActive || mpGameActive) &&
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Space"].includes(e.key)

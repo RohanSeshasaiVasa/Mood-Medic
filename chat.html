@@ -3,22 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>😡 Mood Medic</title>
+    <title>Chat - Mood Medic</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="emoji-float-container"></div>
     <header>
-        <h2>Give your mood, we give the solution !! ◔̯◔</h2>
+        <h2>💬 Community Chat</h2>
         <div class="nav">
-            <a class="nav-link active" href="#home">
+            <a class="nav-link" href="index.html">
                 <span class="nav-icon">🏠</span> Home
             </a>
-            <a class="nav-link" href="Game.html">
+            <a class="nav-link" href="game.html">
                 <span class="nav-icon">🤖</span> Game
             </a>
-            <a class="nav-link" href="chat.html">
-                <span class="nav-icon"><i class="fa-solid fa-comment"></i></span> Chat
+            <a class="nav-link active" href="chat.html">
+                <span class="nav-icon">💬</span> Chat
             </a>
         </div>
     </header>
+
+    <main class="simple-chat-container">
+        <!-- Simple Chat Header -->
+        <div class="simple-chat-header">
+            <p>Chat!!</p>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div class="simple-chat-messages" id="chat-messages">
+            <!-- Welcome message -->
+            <div class="simple-message system">
+                <div class="simple-message-content">
+                    Welcome to the community chat! Be kind and supportive. 🌟
+                </div>
+            </div>
+            
+        <!-- Simple Chat Input -->
+        
+    </main>
+    <div class="simple-chat-input">
+        <div class="simple-username-setup" id="username-setup">
+            <input type="text" id="username-input" placeholder="Enter your name..." maxlength="20">
+            <button id="join-chat-btn" class="simple-btn">Join</button>
+        </div>
+        
+        <div class="simple-chat-controls" id="chat-controls" style="display: none;">
+            <div class="simple-input-group">
+                <input type="text" id="message-input" placeholder="Type your message..." maxlength="300">
+                <button id="send-btn" class="simple-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2025 Mood Medic. All rights reserved.
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
