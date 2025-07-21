@@ -837,7 +837,7 @@ document.addEventListener('keyup', (e) => {
 
 // Multiplayer Hunt & Chase
 let ws;
-const WS_SERVER = 'wss://moodmedic.rohan.hackclub.app';
+const WS_SERVER = 'wss://moodmedic.rohan.hackclub.app/';
 let myId, myName, myRole, opponentId;
 let mpGameActive = false;
 let mpGameLoopId = null;
@@ -1384,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let isConnected = false;
     
     // WebSocket URL - change this if running on a different server
-    const CHAT_SERVER_URL = 'ws://localhost:8089';
+    const CHAT_SERVER_URL = 'wss://moodmedicchat.rohan.hackclub.app';
     
     // Initialize chat
     if (usernameInput && joinChatBtn) {

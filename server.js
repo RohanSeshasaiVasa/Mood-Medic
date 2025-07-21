@@ -1,6 +1,6 @@
  // server.js
  const WebSocket = require('ws');
- const wss = new WebSocket.Server({ port: 8083});
+ const wss = new WebSocket()
 
  let players = {}; // { id: { ws, name, status, opponentId } }
 

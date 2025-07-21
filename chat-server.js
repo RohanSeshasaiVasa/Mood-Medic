@@ -2,7 +2,7 @@
 const WebSocket = require('ws');
 
 // Create WebSocket server on a different port from the game server
-const wss = new WebSocket.Server({ port: 8089 });
+const wss = new WebSocket.Server({ port: 460935 });
 
 // Store connected users
 let connectedUsers = {};
